@@ -193,6 +193,100 @@ export function useStddev(
 }
 
 /**
+ * Min - stateful indicator.
+ * Uses monotonic deque algorithm for efficient sliding window minimum.
+ */
+export class Min {
+  readonly buffer: CircularBuffer<number>;
+  private minDeque: Deque<number>;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.buffer = new CircularBuffer<number>(opts.period);
+    this.minDeque = new Deque(opts.period);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Minimum value in the window
+   */
+  onData(x: number): number {
+    if (this.buffer.full()) {
+      const old = this.buffer.front()!;
+      if (!this.minDeque.empty() && this.minDeque.front() === old) {
+        this.minDeque.pop_front();
+      }
+    }
+
+    this.buffer.push(x);
+
+    while (!this.minDeque.empty() && this.minDeque.back()! >= x) {
+      this.minDeque.pop_back();
+    }
+    this.minDeque.push_back(x);
+
+    return this.minDeque.front()!;
+  }
+}
+
+/**
+ * Creates Min closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes data and returns min
+ */
+export function useMin(opts: PeriodWith<"period">): (x: number) => number {
+  const instance = new Min(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
+ * Max - stateful indicator.
+ * Uses monotonic deque algorithm for efficient sliding window maximum.
+ */
+export class Max {
+  readonly buffer: CircularBuffer<number>;
+  private maxDeque: Deque<number>;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.buffer = new CircularBuffer<number>(opts.period);
+    this.maxDeque = new Deque(opts.period);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Maximum value in the window
+   */
+  onData(x: number): number {
+    if (this.buffer.full()) {
+      const old = this.buffer.front()!;
+      if (!this.maxDeque.empty() && this.maxDeque.front() === old) {
+        this.maxDeque.pop_front();
+      }
+    }
+
+    this.buffer.push(x);
+
+    while (!this.maxDeque.empty() && this.maxDeque.back()! <= x) {
+      this.maxDeque.pop_back();
+    }
+    this.maxDeque.push_back(x);
+
+    return this.maxDeque.front()!;
+  }
+}
+
+/**
+ * Creates Max closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes data and returns max
+ */
+export function useMax(opts: PeriodWith<"period">): (x: number) => number {
+  const instance = new Max(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
  * Min/Max - stateful indicator.
  * Uses monotonic deque algorithm for efficient sliding window min/max.
  */

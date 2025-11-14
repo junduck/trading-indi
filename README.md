@@ -75,7 +75,7 @@ for (const bar of historicalData) {
 |-----------|------------|--------|
 | **EMA** | `period` or `alpha` | `number` |
 | **SMA** | `period` | `number` |
-| **Variance** | `period`, `ddof?` | `{m: number, var: number}` |
+| **Variance** | `period`, `ddof?` | `{mean: number, variance: number}` |
 | **MinMax** | `period` | `{min: number, max: number}` |
 
 ### Volatility

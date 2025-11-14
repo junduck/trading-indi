@@ -118,16 +118,19 @@ export class Variance {
    * @param x New value
    * @returns Object with mean and variance
    */
-  onData(x: number): { m: number; var: number } {
+  onData(x: number): { mean: number; variance: number } {
     if (!this.buffer.full()) {
       this.buffer.push(x);
       const delta = x - this.m;
       this.m += delta / this.buffer.size();
       this.m2 += (x - this.m) * delta;
       if (this.buffer.size() <= this.ddof) {
-        return { m: this.m, var: 0 };
+        return { mean: this.m, variance: 0 };
       } else {
-        return { m: this.m, var: this.m2 / (this.buffer.size() - this.ddof) };
+        return {
+          mean: this.m,
+          variance: this.m2 / (this.buffer.size() - this.ddof),
+        };
       }
     } else {
       const x0 = this.buffer.front()!;
@@ -137,7 +140,7 @@ export class Variance {
       this.m += this.weight * dx;
       this.m2 += dx * (d - this.weight * dx + d0);
       this.buffer.push(x);
-      return { m: this.m, var: this.m2 * this.varWeight };
+      return { mean: this.m, variance: this.m2 * this.varWeight };
     }
   }
 }
@@ -149,7 +152,7 @@ export class Variance {
  */
 export function useVariance(
   opts: PeriodWith<"period"> & { ddof?: number }
-): (x: number) => { m: number; var: number } {
+): (x: number) => { mean: number; variance: number } {
   const instance = new Variance(opts);
   return (x: number) => instance.onData(x);
 }

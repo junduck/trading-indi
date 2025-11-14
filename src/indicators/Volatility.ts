@@ -31,7 +31,7 @@ export class VOLATILITY {
 
     const logReturn = Math.log(bar.close / this.prevClose);
     this.prevClose = bar.close;
-    const { var: variance } = this.variance.onData(logReturn);
+    const { variance: variance } = this.variance.onData(logReturn);
     return Math.sqrt(variance * this.annualizedDays) * 100;
   }
 }

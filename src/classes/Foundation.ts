@@ -158,6 +158,41 @@ export function useVariance(
 }
 
 /**
+ * Standard Deviation - stateful indicator.
+ * Uses Welford's online algorithm via Variance for numerical stability.
+ * Supports Delta Degrees of Freedom (ddof) for sample standard deviation.
+ */
+export class Stddev {
+  private readonly variance: Variance;
+
+  constructor(opts: PeriodWith<"period"> & { ddof?: number }) {
+    this.variance = new Variance(opts);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Object with mean and standard deviation
+   */
+  onData(x: number): { mean: number; stddev: number } {
+    const { mean, variance } = this.variance.onData(x);
+    return { mean, stddev: Math.sqrt(variance) };
+  }
+}
+
+/**
+ * Creates Stddev closure for functional usage.
+ * @param opts Period and ddof configuration
+ * @returns Function that processes data and returns {mean, stddev}
+ */
+export function useStddev(
+  opts: PeriodWith<"period"> & { ddof?: number }
+): (x: number) => { mean: number; stddev: number } {
+  const instance = new Stddev(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
  * Min/Max - stateful indicator.
  * Uses monotonic deque algorithm for efficient sliding window min/max.
  */

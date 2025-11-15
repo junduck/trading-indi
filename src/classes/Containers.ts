@@ -171,9 +171,6 @@ export class Deque<T> {
    * @param capacity Maximum number of elements
    */
   constructor(capacity: number) {
-    if (capacity <= 0) {
-      throw new Error("Deque capacity must be positive");
-    }
     this.size_ = 0;
     this.cap_ = capacity;
     this.buffer = new Array(this.cap_);

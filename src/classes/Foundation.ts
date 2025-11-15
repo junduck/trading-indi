@@ -289,6 +289,46 @@ export function useMax(opts: PeriodWith<"period">): (x: number) => number {
 }
 
 /**
+ * Sum - stateful indicator.
+ * Uses Kahan summation for numerical stability in rolling window sum.
+ */
+export class Sum {
+  readonly buffer: CircularBuffer<number>;
+  private readonly kahan: Kahan;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.buffer = new CircularBuffer<number>(opts.period);
+    this.kahan = new Kahan();
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Sum of values in the window
+   */
+  onData(x: number): number {
+    if (!this.buffer.full()) {
+      this.buffer.push(x);
+      return this.kahan.add(x);
+    } else {
+      const old = this.buffer.front()!;
+      this.buffer.push(x);
+      return this.kahan.add(x - old);
+    }
+  }
+}
+
+/**
+ * Creates Sum closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes data and returns sum
+ */
+export function useSum(opts: PeriodWith<"period">): (x: number) => number {
+  const instance = new Sum(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
  * Min/Max - stateful indicator.
  * Uses monotonic deque algorithm for efficient sliding window min/max.
  */

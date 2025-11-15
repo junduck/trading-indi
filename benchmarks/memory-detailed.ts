@@ -1,3 +1,7 @@
+/**
+ * Detailed memory analysis for indicators.
+ * Run with: NODE_OPTIONS="--expose-gc" pnpm exec tsx benchmarks/memory-detailed.ts
+ */
 import type { BarData } from "../src/types/BarData.js";
 import { EMA, SMA, Variance, MinMax } from "../src/classes/Foundation.js";
 import {
@@ -191,56 +195,135 @@ function createIndicators(): Indicator[] {
   indicators.push({ name: "PVT", instance: new PVT() });
 
   indicators.push({ name: "ZSCORE", instance: new ZSCORE(PERIODS) });
-  // Skip CORRELATION and BETA in benchmark as they require two price inputs
-  // indicators.push({ name: "CORRELATION", instance: new CORRELATION(PERIODS) });
-  // indicators.push({ name: "BETA", instance: new BETA(PERIODS) });
 
   return indicators;
 }
 
-function runBenchmark() {
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
+
+function gc() {
+  if (global.gc) {
+    global.gc();
+  }
+}
+
+function detailedMemoryAnalysis() {
+  console.log("Detailed Memory Analysis");
+  console.log("=".repeat(70));
+
+  gc();
+  const baseline = process.memoryUsage();
+  console.log("\n1. Baseline Memory (after GC):");
+  console.log(`   Heap Used: ${formatBytes(baseline.heapUsed)}`);
+
+  console.log("\n2. Testing bars array memory...");
   const barCount = 100000;
-  console.log(`Generating ${barCount} OHLCV bars...`);
-  const bars = generateOHLCV(barCount);
+  let bars = generateOHLCV(barCount);
+  gc();
+  const afterBars = process.memoryUsage();
+  const barsMemory = afterBars.heapUsed - baseline.heapUsed;
+  console.log(`   Created ${barCount} bars`);
+  console.log(`   Heap Used: ${formatBytes(afterBars.heapUsed)}`);
+  console.log(`   Bars memory: ${formatBytes(barsMemory)}`);
+  console.log(`   Per bar: ${formatBytes(barsMemory / barCount)}`);
 
-  console.log("Creating all indicators...");
+  console.log("\n3. Releasing bars array and running GC...");
+  bars = null as any;
+  gc();
+  const afterRelease = process.memoryUsage();
+  console.log(`   Heap Used: ${formatBytes(afterRelease.heapUsed)}`);
+  console.log(
+    `   Released: ${formatBytes(afterBars.heapUsed - afterRelease.heapUsed)}`
+  );
+
+  console.log("\n4. Creating indicators...");
   const indicators = createIndicators();
-  console.log(`Total indicators: ${indicators.length}\n`);
+  gc();
+  const afterIndicators = process.memoryUsage();
+  const indicatorsMemory = afterIndicators.heapUsed - afterRelease.heapUsed;
+  console.log(`   Created ${indicators.length} indicators`);
+  console.log(`   Heap Used: ${formatBytes(afterIndicators.heapUsed)}`);
+  console.log(`   Indicators memory: ${formatBytes(indicatorsMemory)}`);
+  console.log(
+    `   Per indicator: ${formatBytes(indicatorsMemory / indicators.length)}`
+  );
 
-  console.log("Running benchmark...");
-  const start = performance.now();
+  console.log("\n5. Processing bars (streaming mode - no bars array kept)...");
+  let price = 100;
+  for (let i = 0; i < barCount; i++) {
+    const change = (Math.random() - 0.5) * 2;
+    price = Math.max(10, price + change);
 
-  for (const bar of bars) {
+    const low = price * (1 - Math.random() * 0.02);
+    const high = price * (1 + Math.random() * 0.02);
+    const open = low + Math.random() * (high - low);
+    const close = low + Math.random() * (high - low);
+    const volume = Math.floor(1000000 + Math.random() * 5000000);
+
+    const bar = { open, high, low, close, volume };
+
     for (const indicator of indicators) {
       indicator.instance.onData(bar);
     }
   }
 
-  const end = performance.now();
-  const elapsed = end - start;
-  const totalCalls = bars.length * indicators.length;
+  gc();
+  const afterProcessing = process.memoryUsage();
+  const processingGrowth = afterProcessing.heapUsed - afterIndicators.heapUsed;
+  console.log(`   Processed ${barCount} bars in streaming mode`);
+  console.log(`   Heap Used: ${formatBytes(afterProcessing.heapUsed)}`);
+  console.log(`   Memory growth: ${formatBytes(processingGrowth)}`);
+  console.log(`   Per bar: ${formatBytes(processingGrowth / barCount)}`);
 
-  console.log("\nBenchmark Results:");
-  console.log("=".repeat(50));
-  console.log(`Bars processed: ${bars.length.toLocaleString()}`);
-  console.log(`Indicators tested: ${indicators.length}`);
-  console.log(`Total onData() calls: ${totalCalls.toLocaleString()}`);
-  console.log(`Total time: ${elapsed.toFixed(2)}ms`);
-  console.log(
-    `Average per call: ${(elapsed / totalCalls).toFixed(6)}ms (${(
-      (totalCalls / elapsed) *
-      1000
-    ).toFixed(0)} ops/sec)`
-  );
-  console.log(
-    `Average per bar (all indicators): ${(elapsed / bars.length).toFixed(4)}ms`
-  );
-  console.log("=".repeat(50));
+  console.log("\n6. Testing with bars array kept in memory...");
+  gc();
+  const beforeBarsTest = process.memoryUsage();
+  const indicators2 = createIndicators();
+  const testBars = generateOHLCV(barCount);
 
-  console.log("\nIndicator List:");
-  indicators.forEach((ind, idx) => {
-    console.log(`  ${(idx + 1).toString().padStart(2)}. ${ind.name}`);
-  });
+  for (const bar of testBars) {
+    for (const indicator of indicators2) {
+      indicator.instance.onData(bar);
+    }
+  }
+
+  gc();
+  const afterBarsTest = process.memoryUsage();
+  const totalWithBars = afterBarsTest.heapUsed - beforeBarsTest.heapUsed;
+  console.log(`   Total memory with bars kept: ${formatBytes(totalWithBars)}`);
+
+  console.log("\n" + "=".repeat(70));
+  console.log("ANALYSIS:");
+  console.log("=".repeat(70));
+  console.log(`Bars array size: ${formatBytes(barsMemory)}`);
+  console.log(`Indicators base memory: ${formatBytes(indicatorsMemory)}`);
+  console.log(
+    `Memory growth during streaming (no bars kept): ${formatBytes(
+      processingGrowth
+    )}`
+  );
+  console.log(`Memory with bars kept: ${formatBytes(totalWithBars)}`);
+
+  if (processingGrowth < 1024 * 1024) {
+    console.log("  Indicators are properly bounded and not leaking");
+  } else {
+    console.log("  Possible memory leaks in indicators");
+    console.log(`  Expected: <1 MB, Actual: ${formatBytes(processingGrowth)}`);
+  }
+
+  const expectedWithBars = barsMemory + indicatorsMemory + 1024 * 1024;
+  if (totalWithBars > expectedWithBars * 1.5) {
+    console.log("\n✗ WARNING: Memory usage higher than expected");
+    console.log(
+      `  Expected: ~${formatBytes(expectedWithBars)}, Actual: ${formatBytes(
+        totalWithBars
+      )}`
+    );
+  }
 }
 
-runBenchmark();
+detailedMemoryAnalysis();

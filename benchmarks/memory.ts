@@ -93,6 +93,7 @@ function generateOHLCV(count: number): BarData[] {
 interface Indicator {
   name: string;
   instance: { onData: (bar: any) => any };
+  memoryFootprint?: number;
 }
 
 const PERIODS = {
@@ -191,56 +192,127 @@ function createIndicators(): Indicator[] {
   indicators.push({ name: "PVT", instance: new PVT() });
 
   indicators.push({ name: "ZSCORE", instance: new ZSCORE(PERIODS) });
-  // Skip CORRELATION and BETA in benchmark as they require two price inputs
-  // indicators.push({ name: "CORRELATION", instance: new CORRELATION(PERIODS) });
-  // indicators.push({ name: "BETA", instance: new BETA(PERIODS) });
 
   return indicators;
 }
 
-function runBenchmark() {
-  const barCount = 100000;
-  console.log(`Generating ${barCount} OHLCV bars...`);
-  const bars = generateOHLCV(barCount);
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+  return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+}
 
-  console.log("Creating all indicators...");
+function analyzeMemory() {
+  console.log("Memory Analysis for trading-indi");
+  console.log("=".repeat(50));
+
+  // Get initial memory
+  const initialMemory = process.memoryUsage();
+  console.log("Initial memory usage:");
+  console.log(`  RSS: ${formatBytes(initialMemory.rss)}`);
+  console.log(`  Heap Used: ${formatBytes(initialMemory.heapUsed)}`);
+  console.log(`  Heap Total: ${formatBytes(initialMemory.heapTotal)}`);
+
+  // Create indicators
+  console.log("\nCreating all indicators...");
   const indicators = createIndicators();
-  console.log(`Total indicators: ${indicators.length}\n`);
+  const afterCreationMemory = process.memoryUsage();
 
-  console.log("Running benchmark...");
+  console.log(`Memory after creating ${indicators.length} indicators:`);
+  console.log(
+    `  RSS: ${formatBytes(afterCreationMemory.rss)} (+${formatBytes(
+      afterCreationMemory.rss - initialMemory.rss
+    )})`
+  );
+  console.log(
+    `  Heap Used: ${formatBytes(afterCreationMemory.heapUsed)} (+${formatBytes(
+      afterCreationMemory.heapUsed - initialMemory.heapUsed
+    )})`
+  );
+  console.log(
+    `  Memory per indicator: ${formatBytes(
+      (afterCreationMemory.heapUsed - initialMemory.heapUsed) /
+        indicators.length
+    )}`
+  );
+
+  // Process data
+  console.log("\nProcessing 100,000 bars...");
+  const bars = generateOHLCV(100000);
+
   const start = performance.now();
-
   for (const bar of bars) {
     for (const indicator of indicators) {
       indicator.instance.onData(bar);
     }
   }
-
   const end = performance.now();
-  const elapsed = end - start;
-  const totalCalls = bars.length * indicators.length;
 
-  console.log("\nBenchmark Results:");
-  console.log("=".repeat(50));
-  console.log(`Bars processed: ${bars.length.toLocaleString()}`);
-  console.log(`Indicators tested: ${indicators.length}`);
-  console.log(`Total onData() calls: ${totalCalls.toLocaleString()}`);
-  console.log(`Total time: ${elapsed.toFixed(2)}ms`);
+  const afterProcessingMemory = process.memoryUsage();
+  console.log(`Memory after processing 100,000 bars:`);
   console.log(
-    `Average per call: ${(elapsed / totalCalls).toFixed(6)}ms (${(
-      (totalCalls / elapsed) *
-      1000
-    ).toFixed(0)} ops/sec)`
+    `  RSS: ${formatBytes(afterProcessingMemory.rss)} (+${formatBytes(
+      afterProcessingMemory.rss - afterCreationMemory.rss
+    )})`
   );
   console.log(
-    `Average per bar (all indicators): ${(elapsed / bars.length).toFixed(4)}ms`
+    `  Heap Used: ${formatBytes(
+      afterProcessingMemory.heapUsed
+    )} (+${formatBytes(
+      afterProcessingMemory.heapUsed - afterCreationMemory.heapUsed
+    )})`
   );
+
+  // Performance analysis
+  console.log("\nPerformance Analysis:");
+  console.log("=".repeat(50));
+  console.log(`Processing time: ${(end - start).toFixed(2)}ms`);
+  console.log(
+    `Bars per second: ${(bars.length / ((end - start) / 1000)).toFixed(0)}`
+  );
+  console.log(
+    `Indicators per second: ${(
+      (bars.length * indicators.length) /
+      ((end - start) / 1000)
+    ).toFixed(0)}`
+  );
+  console.log(
+    `Time per bar (all indicators): ${((end - start) / bars.length).toFixed(
+      4
+    )}ms`
+  );
+  console.log(
+    `Time per indicator call: ${(
+      (end - start) /
+      (bars.length * indicators.length)
+    ).toFixed(6)}ms`
+  );
+
+  // Real-time trading suitability analysis
+  console.log("\nReal-time Trading Suitability Analysis:");
   console.log("=".repeat(50));
 
-  console.log("\nIndicator List:");
-  indicators.forEach((ind, idx) => {
-    console.log(`  ${(idx + 1).toString().padStart(2)}. ${ind.name}`);
-  });
+  const timePerBarMs = (end - start) / bars.length;
+  const indicatorsPerCall = Math.floor(100 / timePerBarMs); // How many indicators can run in 100ms
+  const maxBarsPerSecond = Math.floor(1000 / timePerBarMs);
+
+  console.log(
+    `Time to process one bar with all indicators: ${timePerBarMs.toFixed(4)}ms`
+  );
+  console.log(`Maximum bars per second possible: ${maxBarsPerSecond}`);
+  console.log(`Can process ${indicatorsPerCall} indicators in 100ms window`);
+
+  // Memory efficiency analysis
+  console.log("\nMemory Efficiency Analysis:");
+  console.log("=".repeat(50));
+  const memoryPerIndicator =
+    (afterCreationMemory.heapUsed - initialMemory.heapUsed) / indicators.length;
+  const memoryGrowthPerBar =
+    (afterProcessingMemory.heapUsed - afterCreationMemory.heapUsed) /
+    bars.length;
+
+  console.log(`Memory per indicator: ${formatBytes(memoryPerIndicator)}`);
+  console.log(`Memory growth per bar: ${formatBytes(memoryGrowthPerBar)}`);
 }
 
-runBenchmark();
+analyzeMemory();

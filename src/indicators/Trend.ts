@@ -1,8 +1,8 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
 import { CircularBuffer } from "../classes/Containers.js";
-import { EMA, SMA } from "../classes/Foundation.js";
-import { ATR } from "./Volatility.js";
+import { EMA, SMA, Sum } from "../classes/Foundation.js";
+import { ATR, PriceChannel } from "./Volatility.js";
 import { wilders_factor } from "../utils/math.js";
 
 /**
@@ -414,9 +414,6 @@ export class ADXR {
   private buffer: CircularBuffer<number>;
 
   constructor(opts: PeriodWith<"period">) {
-    if (opts.period === undefined) {
-      throw new Error("ADXR requires period");
-    }
     this.adx = new ADX(opts);
     this.buffer = new CircularBuffer<number>(opts.period);
   }
@@ -448,5 +445,268 @@ export function useADXR(
   opts: PeriodWith<"period">
 ): (bar: BarWith<"high" | "low" | "close">) => number {
   const instance = new ADXR(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Parabolic SAR - stop and reverse indicator.
+ * Pure heuristic trailing stop.
+ */
+export class SAR {
+  private af: number;
+  private maxAf: number;
+  private isLong: boolean = true;
+  private sar?: number;
+  private ep?: number;
+  private prevHigh?: number;
+  private prevLow?: number;
+  private prevPrevHigh?: number | undefined; // Added
+  private prevPrevLow?: number | undefined; // Added
+  private afIncrement: number;
+
+  constructor(opts?: { acceleration?: number; maximum?: number }) {
+    this.af = opts?.acceleration ?? 0.02;
+    this.afIncrement = opts?.acceleration ?? 0.02;
+    this.maxAf = opts?.maximum ?? 0.2;
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with high and low
+   * @returns Current SAR value (stop level)
+   */
+  onData(bar: BarWith<"high" | "low">): number {
+    if (this.sar === undefined) {
+      this.sar = bar.low;
+      this.ep = bar.high;
+      this.prevHigh = bar.high;
+      this.prevLow = bar.low;
+      return this.sar;
+    }
+
+    const prevSar = this.sar;
+
+    if (this.isLong) {
+      this.sar = prevSar + this.af * (this.ep! - prevSar);
+
+      if (bar.low < this.sar) {
+        this.isLong = false;
+        // this.sar = this.ep!;
+        // Don't penetrate current bar
+        this.sar = Math.max(this.ep!, bar.high);
+        this.ep = bar.low;
+        this.af = this.afIncrement;
+      } else {
+        if (bar.high > this.ep!) {
+          this.ep = bar.high;
+          this.af = Math.min(this.af + this.afIncrement, this.maxAf);
+        }
+
+        // SAR must not be above prior two lows
+        const minLow =
+          this.prevPrevLow !== undefined
+            ? Math.min(this.prevLow!, this.prevPrevLow)
+            : this.prevLow!;
+
+        this.sar = Math.min(this.sar, minLow);
+      }
+    } else {
+      this.sar = prevSar + this.af * (this.ep! - prevSar);
+
+      if (bar.high > this.sar) {
+        this.isLong = true;
+        // this.sar = this.ep!;
+        // Don't penetrate current bar
+        this.sar = Math.min(this.ep!, bar.low);
+        this.ep = bar.high;
+        this.af = this.afIncrement;
+      } else {
+        if (bar.low < this.ep!) {
+          this.ep = bar.low;
+          this.af = Math.min(this.af + this.afIncrement, this.maxAf);
+        }
+
+        // SAR must not be below prior two highs
+        const maxHigh =
+          this.prevPrevHigh !== undefined
+            ? Math.max(this.prevHigh!, this.prevPrevHigh)
+            : this.prevHigh!;
+
+        this.sar = Math.max(this.sar, maxHigh);
+      }
+    }
+
+    this.prevPrevHigh = this.prevHigh;
+    this.prevPrevLow = this.prevLow;
+    this.prevHigh = bar.high;
+    this.prevLow = bar.low;
+
+    return this.sar;
+  }
+}
+
+/**
+ * Creates SAR closure for functional usage.
+ * @param opts Acceleration and maximum configuration
+ * @returns Function that processes bar data and returns SAR
+ */
+export function useSAR(opts?: {
+  acceleration?: number;
+  maximum?: number;
+}): (bar: BarWith<"high" | "low">) => number {
+  const instance = new SAR(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Vortex Indicator - identifies trend start and end.
+ * Measures positive and negative vortex movement.
+ */
+export class VI {
+  private prevLow?: number;
+  private prevHigh?: number;
+  private preClose?: number;
+  private vm_minus_sum: Sum;
+  private vm_plus_sum: Sum;
+  private tr_sum: Sum;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.vm_minus_sum = new Sum(opts);
+    this.vm_plus_sum = new Sum(opts);
+    this.tr_sum = new Sum(opts);
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with high, low, close
+   * @returns Object with vi_plus and vi_minus
+   */
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    vi_plus: number;
+    vi_minus: number;
+  } {
+    const { high, low, close } = bar;
+    if (this.prevLow === undefined) {
+      this.prevHigh = high;
+      this.prevLow = low;
+      this.preClose = close;
+      return {
+        vi_plus: 0,
+        vi_minus: 0,
+      };
+    }
+
+    const vm_plus = Math.abs(high - this.prevLow);
+    const vm_minus = Math.abs(low - this.prevHigh!);
+    const tr = Math.max(
+      high - low,
+      Math.abs(high - this.preClose!),
+      Math.abs(low - this.preClose!)
+    );
+
+    const tr_sum = this.tr_sum.onData(tr);
+    if (tr_sum === 0) {
+      return { vi_plus: 0, vi_minus: 0 };
+    }
+
+    const vm_plus_sum = this.vm_plus_sum.onData(vm_plus);
+    const vm_minus_sum = this.vm_minus_sum.onData(vm_minus);
+
+    return {
+      vi_plus: vm_plus_sum / tr_sum,
+      vi_minus: vm_minus_sum / tr_sum,
+    };
+  }
+}
+
+/**
+ * Creates VI closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes bar data and returns Vortex Indicator
+ */
+export function useVI(opts: PeriodWith<"period">): (
+  bar: BarWith<"high" | "low" | "close">
+) => {
+  vi_plus: number;
+  vi_minus: number;
+} {
+  const instance = new VI(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Ichimoku Cloud - comprehensive trend indicator.
+ * Provides multiple components for support/resistance and trend analysis.
+ */
+export class ICHIMOKU {
+  private tenkanChannel: PriceChannel;
+  private kijunChannel: PriceChannel;
+  private senkouChannel: PriceChannel;
+  private chikouBuffer: CircularBuffer<number>;
+
+  constructor(opts?: {
+    tenkan_period?: number;
+    kijun_period?: number;
+    senkou_b_period?: number;
+    displacement?: number;
+  }) {
+    const tenkanPeriod = opts?.tenkan_period ?? 9;
+    const kijunPeriod = opts?.kijun_period ?? 26;
+    const senkouPeriod = opts?.senkou_b_period ?? 52;
+    const displacement = opts?.displacement ?? 26;
+
+    this.tenkanChannel = new PriceChannel({ period: tenkanPeriod });
+    this.kijunChannel = new PriceChannel({ period: kijunPeriod });
+    this.senkouChannel = new PriceChannel({ period: senkouPeriod });
+    this.chikouBuffer = new CircularBuffer(displacement);
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with high, low, close
+   * @returns Ichimoku components
+   */
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    tenkan: number;
+    kijun: number;
+    senkou_a: number;
+    senkou_b: number;
+    chikou: number;
+  } {
+    const tenkanHL = this.tenkanChannel.onData(bar);
+    const kijunHL = this.kijunChannel.onData(bar);
+    const senkouHL = this.senkouChannel.onData(bar);
+    this.chikouBuffer.push(bar.close);
+
+    const tenkan = (tenkanHL.upper + tenkanHL.lower) / 2;
+    const kijun = (kijunHL.upper + kijunHL.lower) / 2;
+    const senkou_b = (senkouHL.upper + senkouHL.lower) / 2;
+    const senkou_a = (tenkan + kijun) / 2;
+    const chikou = this.chikouBuffer.full()
+      ? this.chikouBuffer.front()!
+      : bar.close;
+
+    return { tenkan, kijun, senkou_a, senkou_b, chikou };
+  }
+}
+
+/**
+ * Creates ICHIMOKU closure for functional usage.
+ * @param opts Ichimoku period configuration
+ * @returns Function that processes bar data and returns Ichimoku components
+ */
+export function useICHIMOKU(opts?: {
+  tenkan_period?: number;
+  kijun_period?: number;
+  senkou_b_period?: number;
+  displacement?: number;
+}): (bar: BarWith<"high" | "low" | "close">) => {
+  tenkan: number;
+  kijun: number;
+  senkou_a: number;
+  senkou_b: number;
+  chikou: number;
+} {
+  const instance = new ICHIMOKU(opts);
   return (bar) => instance.onData(bar);
 }

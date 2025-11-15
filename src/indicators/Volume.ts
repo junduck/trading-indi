@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
 import { CircularBuffer } from "../classes/Containers.js";
-import { EMA } from "../classes/Foundation.js";
+import { EMA, Sum } from "../classes/Foundation.js";
 
 /**
  * Accumulation/Distribution - stateful indicator.
@@ -427,5 +427,260 @@ export function useVOSC(
   opts: PeriodWith<"period_short" | "period_long">
 ): (bar: BarWith<"volume">) => number {
   const instance = new VOSC(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Chaikin Money Flow - volume-weighted accumulation/distribution.
+ * Measures buying/selling pressure over a period.
+ */
+export class CMF {
+  private mfvSum: Sum;
+  private volSum: Sum;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.mfvSum = new Sum(opts);
+    this.volSum = new Sum(opts);
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with high, low, close, volume
+   * @returns CMF value (-1 to +1 range)
+   */
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    const clv =
+      bar.high !== bar.low
+        ? (bar.close - bar.low - (bar.high - bar.close)) / (bar.high - bar.low)
+        : 0;
+    const mfv = clv * bar.volume;
+
+    const mfvSum = this.mfvSum.onData(mfv);
+    const volSum = this.volSum.onData(bar.volume);
+
+    return volSum !== 0 ? mfvSum / volSum : 0;
+  }
+}
+
+/**
+ * Creates CMF closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes bar data and returns CMF
+ */
+export function useCMF(
+  opts: PeriodWith<"period">
+): (bar: BarWith<"high" | "low" | "close" | "volume">) => number {
+  const instance = new CMF(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Chaikin Oscillator - momentum of accumulation/distribution.
+ * Difference between short and long EMAs of A/D line.
+ */
+export class CHO {
+  private ad: AD;
+  private emaShort: EMA;
+  private emaLong: EMA;
+
+  constructor(opts: PeriodWith<"period_short" | "period_long">) {
+    this.ad = new AD();
+    this.emaShort = new EMA({ period: opts.period_short });
+    this.emaLong = new EMA({ period: opts.period_long });
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with high, low, close, volume
+   * @returns Chaikin Oscillator value
+   */
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    const adValue = this.ad.onData(bar);
+    return this.emaShort.onData(adValue) - this.emaLong.onData(adValue);
+  }
+}
+
+/**
+ * Creates CHO closure for functional usage.
+ * @param opts Short and long period configuration
+ * @returns Function that processes bar data and returns Chaikin Oscillator
+ */
+export function useCHO(
+  opts: PeriodWith<"period_short" | "period_long">
+): (bar: BarWith<"high" | "low" | "close" | "volume">) => number {
+  const instance = new CHO(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Percentage Volume Oscillator - volume momentum indicator.
+ * Percentage difference between short and long volume EMAs.
+ */
+export class PVO {
+  private emaShort: EMA;
+  private emaLong: EMA;
+  private emaSignal: EMA;
+
+  constructor(
+    opts: PeriodWith<"period_short" | "period_long"> & {
+      period_signal?: number;
+    }
+  ) {
+    this.emaShort = new EMA({ period: opts.period_short });
+    this.emaLong = new EMA({ period: opts.period_long });
+    this.emaSignal = new EMA({ period: opts.period_signal ?? 9 });
+  }
+
+  /**
+   * Process new volume data.
+   * @param bar Bar with volume
+   * @returns Object with pvo, signal, and histogram
+   */
+  onData(bar: BarWith<"volume">): {
+    pvo: number;
+    signal: number;
+    histogram: number;
+  } {
+    const emaShortVal = this.emaShort.onData(bar.volume);
+    const emaLongVal = this.emaLong.onData(bar.volume);
+    const pvo =
+      emaLongVal !== 0 ? ((emaShortVal - emaLongVal) / emaLongVal) * 100 : 0;
+    const signal = this.emaSignal.onData(pvo);
+    const histogram = pvo - signal;
+
+    return { pvo, signal, histogram };
+  }
+}
+
+/**
+ * Creates PVO closure for functional usage.
+ * @param opts Short, long, and signal period configuration
+ * @returns Function that processes bar data and returns PVO
+ */
+export function usePVO(
+  opts: PeriodWith<"period_short" | "period_long"> & { period_signal?: number }
+): (bar: BarWith<"volume">) => {
+  pvo: number;
+  signal: number;
+  histogram: number;
+} {
+  const instance = new PVO(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Elder's Force Index - measures power behind price movements.
+ * Combines price change with volume.
+ */
+export class FI {
+  private ema: EMA;
+  private prevClose?: number;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.ema = new EMA({ period: opts.period });
+  }
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with close and volume
+   * @returns Force Index value
+   */
+  onData(bar: BarWith<"close" | "volume">): number {
+    if (this.prevClose === undefined) {
+      this.prevClose = bar.close;
+      return this.ema.onData(0);
+    }
+
+    const force = (bar.close - this.prevClose) * bar.volume;
+    this.prevClose = bar.close;
+    return this.ema.onData(force);
+  }
+}
+
+/**
+ * Creates FI closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes bar data and returns Force Index
+ */
+export function useFI(
+  opts: PeriodWith<"period">
+): (bar: BarWith<"close" | "volume">) => number {
+  const instance = new FI(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Volume Rate of Change - measures volume momentum.
+ * Percentage change in volume over period.
+ */
+export class VROC {
+  private buffer: CircularBuffer<number>;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.buffer = new CircularBuffer(opts.period + 1);
+  }
+
+  /**
+   * Process new volume data.
+   * @param bar Bar with volume
+   * @returns Volume rate of change as percentage
+   */
+  onData(bar: BarWith<"volume">): number {
+    this.buffer.push(bar.volume);
+
+    if (!this.buffer.full()) {
+      return 0;
+    }
+
+    const oldVolume = this.buffer.front()!;
+    return oldVolume !== 0 ? ((bar.volume - oldVolume) / oldVolume) * 100 : 0;
+  }
+}
+
+/**
+ * Creates VROC closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes bar data and returns VROC
+ */
+export function useVROC(
+  opts: PeriodWith<"period">
+): (bar: BarWith<"volume">) => number {
+  const instance = new VROC(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
+ * Price Volume Trend - cumulative volume based on price changes.
+ * Similar to OBV but uses percentage price change.
+ */
+export class PVT {
+  private pvt: number = 0;
+  private prevClose?: number;
+
+  /**
+   * Process new bar data.
+   * @param bar Bar with close and volume
+   * @returns Cumulative PVT value
+   */
+  onData(bar: BarWith<"close" | "volume">): number {
+    if (this.prevClose === undefined || this.prevClose === 0) {
+      this.prevClose = bar.close;
+      return this.pvt;
+    }
+
+    const priceChange = (bar.close - this.prevClose) / this.prevClose;
+    this.pvt += priceChange * bar.volume;
+    this.prevClose = bar.close;
+
+    return this.pvt;
+  }
+}
+
+/**
+ * Creates PVT closure for functional usage.
+ * @returns Function that processes bar data and returns PVT
+ */
+export function usePVT(): (bar: BarWith<"close" | "volume">) => number {
+  const instance = new PVT();
   return (bar) => instance.onData(bar);
 }

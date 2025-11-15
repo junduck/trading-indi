@@ -27,6 +27,14 @@ export {
   useATR,
   NATR,
   useNATR,
+  PriceChannel,
+  usePriceChannel,
+  BBANDS,
+  useBBANDS,
+  KC,
+  useKC,
+  DC,
+  useDC,
 } from "./indicators/Volatility.js";
 
 export {
@@ -78,6 +86,12 @@ export {
   useADX,
   ADXR,
   useADXR,
+  SAR,
+  useSAR,
+  VI,
+  useVI,
+  ICHIMOKU,
+  useICHIMOKU,
 } from "./indicators/Trend.js";
 
 export {
@@ -101,6 +115,18 @@ export {
   useMARKETFI,
   VOSC,
   useVOSC,
+  CMF,
+  useCMF,
+  CHO,
+  useCHO,
+  PVO,
+  usePVO,
+  FI,
+  useFI,
+  VROC,
+  useVROC,
+  PVT,
+  usePVT,
 } from "./indicators/Volume.js";
 
 export {
@@ -118,4 +144,19 @@ export {
   useCMO,
   WAD,
   useWAD,
+  RVI,
+  useRVI,
+  TSI,
+  useTSI,
+  BBPOWER,
+  useBBPOWER,
 } from "./indicators/Momentum.js";
+
+export {
+  ZSCORE,
+  useZSCORE,
+  CORRELATION,
+  useCORRELATION,
+  BETA,
+  useBETA,
+} from "./indicators/Statistical.js";

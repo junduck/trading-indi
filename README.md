@@ -88,6 +88,10 @@ for (const bar of historicalData) {
 | **TR** | none | `number` |
 | **ATR** | `period` | `number` |
 | **NATR** | `period` | `number` |
+| **PriceChannel** | `period` | `{upper, lower}` |
+| **BBANDS** | `period`, `stddev?` | `{upper, middle, lower}` |
+| **KC** | `period`, `multiplier?` | `{upper, middle, lower}` |
+| **DC** | `period` | `{upper, middle, lower}` |
 
 ### Momentum
 
@@ -100,6 +104,9 @@ for (const bar of historicalData) {
 | **RSI** | `period` | `number` |
 | **CMO** | `period` | `number` |
 | **WAD** | none | `number` |
+| **RVI** | `period` | `{rvi, signal}` |
+| **TSI** | `long_period?`, `short_period?`, `signal_period?` | `{tsi, signal}` |
+| **BBPOWER** | `period` | `{bull_power, bear_power}` |
 
 ### Oscillators
 
@@ -136,6 +143,9 @@ for (const bar of historicalData) {
 | **DX** | `period` | `number` |
 | **ADX** | `period` | `number` |
 | **ADXR** | `period` | `number` |
+| **SAR** | `acceleration?`, `maximum?` | `number` |
+| **VI** | `period` | `{vi_plus, vi_minus}` |
+| **ICHIMOKU** | `tenkan_period?`, `kijun_period?`, `senkou_b_period?`, `displacement?` | `{tenkan, kijun, senkou_a, senkou_b, chikou}` |
 
 ### Volume
 
@@ -151,6 +161,20 @@ for (const bar of historicalData) {
 | **EMV** | none | `number` |
 | **MARKETFI** | none | `number` |
 | **VOSC** | `period_short`, `period_long` | `number` |
+| **CMF** | `period` | `number` |
+| **CHO** | `period_short`, `period_long` | `number` |
+| **PVO** | `period_short`, `period_long`, `period_signal?` | `{pvo, signal, histogram}` |
+| **FI** | `period` | `number` |
+| **VROC** | `period` | `number` |
+| **PVT** | none | `number` |
+
+### Statistical
+
+| Indicator | Parameters | Output |
+|-----------|------------|--------|
+| **ZSCORE** | `period` | `number` |
+| **CORRELATION** | `period` | `number` |
+| **BETA** | `period` | `number` |
 
 ## Real-World Example: Intraday Strategy
 

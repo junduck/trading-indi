@@ -1,3 +1,7 @@
+/**
+ * Period configuration for indicators.
+ * Provides flexible period options for various indicator types.
+ */
 export interface PeriodOptions {
   period?: number;
   period_long?: number;
@@ -6,6 +10,10 @@ export interface PeriodOptions {
   period_signal?: number;
 }
 
+/**
+ * Utility type to require specific period fields.
+ * @example PeriodWith<'period'> ensures period is required
+ */
 export type PeriodWith<K extends keyof PeriodOptions> = Required<
   Pick<PeriodOptions, K>
 >;

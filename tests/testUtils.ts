@@ -1,4 +1,4 @@
-import type { BarData } from "../src/types/Bar.js";
+import type { BarData } from "../src/types/BarData.js";
 
 /**
  * Generates a sequence of numbers with optional step

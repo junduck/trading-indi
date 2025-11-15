@@ -68,7 +68,6 @@ import {
   VROC,
   PVT,
 } from "../src/indicators/Volume.js";
-import { ZSCORE, CORRELATION, BETA } from "../src/indicators/Statistical.js";
 
 function generateOHLCV(count: number): BarData[] {
   const bars: BarData[] = [];
@@ -190,8 +189,6 @@ function createIndicators(): Indicator[] {
   indicators.push({ name: "FI", instance: new FI(PERIODS) });
   indicators.push({ name: "VROC", instance: new VROC(PERIODS) });
   indicators.push({ name: "PVT", instance: new PVT() });
-
-  indicators.push({ name: "ZSCORE", instance: new ZSCORE(PERIODS) });
 
   return indicators;
 }

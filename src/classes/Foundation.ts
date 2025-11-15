@@ -49,6 +49,56 @@ export function useEMA(
 }
 
 /**
+ * Exponentially Weighted Moving Average - stateful indicator.
+ * Maintains sliding window with exponentially decaying weights, normalized by total weight.
+ * Uses alpha = 2/(period+1).
+ */
+export class EWMA {
+  readonly buffer: CircularBuffer<number>;
+  private readonly alpha: number;
+  private readonly a1: number;
+  private a1_n: number = 1;
+  private s: number = 0;
+  private readonly totalWeight: Kahan;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.buffer = new CircularBuffer<number>(opts.period);
+    this.alpha = exp_factor(opts.period);
+    this.a1 = 1 - this.alpha;
+    this.totalWeight = new Kahan();
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Current EWMA value
+   */
+  onData(x: number): number {
+    if (!this.buffer.full()) {
+      this.buffer.push(x);
+      this.totalWeight.add(this.a1_n);
+      this.s = this.a1 * this.s + x;
+      this.a1_n *= this.a1;
+    } else {
+      const x0 = this.buffer.front()!;
+      this.buffer.push(x);
+      this.s = this.a1 * this.s + x - this.a1_n * x0;
+    }
+    return this.s / this.totalWeight.sum;
+  }
+}
+
+/**
+ * Creates EWMA closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes data and returns EWMA
+ */
+export function useEWMA(opts: PeriodWith<"period">): (x: number) => number {
+  const instance = new EWMA(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
  * Simple Moving Average - stateful indicator.
  * Maintains rolling window of prices for exact average calculation.
  */

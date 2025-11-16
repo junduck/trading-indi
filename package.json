@@ -1,6 +1,6 @@
 {
   "name": "@junduck/trading-indi",
-  "version": "0.9.2",
+  "version": "0.99.0",
   "description": "A TypeScript library providing 80+ technical indicators for trading, designed for incremental, stateful calculation perfect for intraday and realtime trading applications",
   "keywords": [
     "trading",
@@ -34,6 +34,10 @@
     "bench": "tsx benchmarks/bench.ts",
     "bench:memory": "tsx benchmarks/memory.ts",
     "bench:realtime": "tsx benchmarks/realtime.ts",
+    "bench:graph": "NODE_OPTIONS=\"--expose-gc\" tsx benchmarks/graph-performance.ts",
+    "bench:graph:listeners": "tsx benchmarks/graph-listener-overhead.ts",
+    "bench:graph:profile": "node --prof --import tsx/esm benchmarks/graph-profile.ts",
+    "bench:graph:clinic": "clinic doctor -- node --import tsx/esm benchmarks/graph-profile.ts",
     "prepublishOnly": "pnpm run clean && pnpm run build"
   },
   "author": "Jun",
@@ -51,6 +55,8 @@
     "@types/node": "^24.10.1",
     "@vitest/coverage-v8": "^4.0.8",
     "@vitest/ui": "^4.0.8",
+    "autocannon": "^8.0.0",
+    "clinic": "^13.0.0",
     "tsx": "^4.20.6",
     "typescript": "^5.9.3",
     "vitest": "^4.0.8"

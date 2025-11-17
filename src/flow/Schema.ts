@@ -7,7 +7,15 @@ export interface OpSchema {
   name: string;
   type: string;
   init?: any;
-  onDataSource: string[];
+  onDataSource?: string[] | string;
+}
+
+/**
+ * Normalize onDataSource to string array. Handles undefined, empty string, and Const nodes.
+ */
+export function normalizeOnDataSource(source?: string[] | string): string[] {
+  if (!source || source === "") return [];
+  return Array.isArray(source) ? source : [source];
 }
 
 /**
@@ -48,7 +56,8 @@ export function validateGraphSchema(
       errors.push(`Unknown type "${node.type}" for node "${node.name}"`);
     }
 
-    for (const depPath of node.onDataSource) {
+    const sources = normalizeOnDataSource(node.onDataSource);
+    for (const depPath of sources) {
       const depNode = depPath.split(".")[0]!;
       if (!nodeNames.has(depNode)) {
         errors.push(
@@ -81,7 +90,8 @@ function detectCycle(desc: GraphSchema): string | null {
   }
 
   for (const node of desc.nodes) {
-    for (const depPath of node.onDataSource) {
+    const sources = normalizeOnDataSource(node.onDataSource);
+    for (const depPath of sources) {
       const dep = depPath.split(".")[0]!;
       adjList.get(dep)!.push(node.name);
       inDegree.set(node.name, inDegree.get(node.name)! + 1);
@@ -117,7 +127,7 @@ function detectCycle(desc: GraphSchema): string | null {
  */
 export function graphComplexity(desc: GraphSchema): number {
   const edgeCount = desc.nodes.reduce(
-    (sum, node) => sum + node.onDataSource.length,
+    (sum, node) => sum + normalizeOnDataSource(node.onDataSource).length,
     0
   );
   return desc.nodes.length + edgeCount;
@@ -200,14 +210,20 @@ export function graphDiff(
       });
     }
 
-    const beforeInputs = beforeNode.onDataSource.slice().sort().join(",");
-    const afterInputs = afterNode.onDataSource.slice().sort().join(",");
+    const beforeInputs = normalizeOnDataSource(beforeNode.onDataSource)
+      .slice()
+      .sort()
+      .join(",");
+    const afterInputs = normalizeOnDataSource(afterNode.onDataSource)
+      .slice()
+      .sort()
+      .join(",");
     if (beforeInputs !== afterInputs) {
       diffs.push({
         kind: "node_input_changed",
         node: name,
-        before: beforeNode.onDataSource,
-        after: afterNode.onDataSource,
+        before: normalizeOnDataSource(beforeNode.onDataSource),
+        after: normalizeOnDataSource(afterNode.onDataSource),
       });
     }
   }

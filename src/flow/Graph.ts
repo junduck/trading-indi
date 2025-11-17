@@ -1,5 +1,6 @@
 import type { OpRegistry } from "./Registry.js";
 import type { GraphSchema } from "./Schema.js";
+import { normalizeOnDataSource } from "./Schema.js";
 
 function resolvePath(state: Record<string, any>, path: string): any {
   if (!path) return undefined;
@@ -113,7 +114,8 @@ export class Graph {
       }
 
       const instance = new ctor(nodeDesc.init ?? {});
-      graph.add(nodeDesc.name, instance).depends(...nodeDesc.onDataSource);
+      const sources = normalizeOnDataSource(nodeDesc.onDataSource);
+      graph.add(nodeDesc.name, instance).depends(...sources);
     }
 
     return graph;
@@ -277,6 +279,24 @@ export class Graph {
       errors,
     };
   }
+
+  // Experiment:
+  /* Logic completeness: ANY
+// Initialize topological sort
+for (const node of nodes) {
+  if (node.fireWhen === "any") {
+    inDegree.set(node.name, 1);
+  } else {
+    inDegree.set(node.name, node.input.length);
+  }
+}
+
+No extra book keeping required:
+fireWhen: "any", deps: [A, B, C], initial inDegree = 1
+A fires: 1 - 1 = 0  → queue ✓
+B fires: 0 - 1 = -1 → skip (not 0)
+C fires: -1 - 1 = -2 → skip (not 0)
+   */
 
   /** Execute the graph with new input data. */
   async onData(data: any): Promise<void> {

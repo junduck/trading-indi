@@ -1,0 +1,109 @@
+{
+  "root": "tick",
+  "nodes": [
+    {
+      "name": "returns",
+      "type": "Sub",
+      "onDataSource": ["tick.close", "tick.open"]
+    },
+    {
+      "name": "abs_returns",
+      "type": "Abs",
+      "onDataSource": ["returns"]
+    },
+    {
+      "name": "short_vol",
+      "type": "EMA",
+      "init": { "period": 5 },
+      "onDataSource": ["abs_returns"]
+    },
+    {
+      "name": "long_vol",
+      "type": "EMA",
+      "init": { "period": 20 },
+      "onDataSource": ["abs_returns"]
+    },
+    {
+      "name": "vol_ratio",
+      "type": "Div",
+      "onDataSource": ["short_vol", "long_vol"]
+    },
+    {
+      "name": "vol_shift",
+      "type": "Sub",
+      "onDataSource": ["vol_ratio", "const_one"]
+    },
+    {
+      "name": "const_one",
+      "type": "Const",
+      "init": { "value": 1 }
+    },
+    {
+      "name": "price_ema_fast",
+      "type": "EMA",
+      "init": { "period": 10 },
+      "onDataSource": ["tick.close"]
+    },
+    {
+      "name": "price_ema_slow",
+      "type": "EMA",
+      "init": { "period": 30 },
+      "onDataSource": ["tick.close"]
+    },
+    {
+      "name": "momentum",
+      "type": "Sub",
+      "onDataSource": ["price_ema_fast", "price_ema_slow"]
+    },
+    {
+      "name": "momentum_normalized",
+      "type": "Div",
+      "onDataSource": ["momentum", "tick.close"]
+    },
+    {
+      "name": "momentum_scaled",
+      "type": "Mul",
+      "onDataSource": ["momentum_normalized", "const_100"]
+    },
+    {
+      "name": "const_100",
+      "type": "Const",
+      "init": { "value": 100 }
+    },
+    {
+      "name": "vol_shift_clamped",
+      "type": "Clamp",
+      "onDataSource": ["vol_shift", "const_neg_one", "const_one"]
+    },
+    {
+      "name": "const_neg_one",
+      "type": "Const",
+      "init": { "value": -1 }
+    },
+    {
+      "name": "combined_signal",
+      "type": "Mul",
+      "onDataSource": ["vol_shift_clamped", "momentum_scaled"]
+    },
+    {
+      "name": "const_50",
+      "type": "Const",
+      "init": { "value": 50 }
+    },
+    {
+      "name": "signal_shifted",
+      "type": "Add",
+      "onDataSource": ["combined_signal", "const_50"]
+    },
+    {
+      "name": "const_zero",
+      "type": "Const",
+      "init": { "value": 0 }
+    },
+    {
+      "name": "output",
+      "type": "Clamp",
+      "onDataSource": ["signal_shifted", "const_zero", "const_100"]
+    }
+  ]
+}

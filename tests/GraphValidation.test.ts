@@ -137,6 +137,36 @@ describe("Graph Validation", () => {
     const result = validateGraphSchema(descriptor, registry);
     expect(result.valid).toBe(true);
   });
+
+  it("should validate when onDataSource is omitted (for Const nodes)", () => {
+    const registry = new OpRegistry().register(Op);
+
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        { name: "const", type: "Op" },
+        { name: "b", type: "Op", onDataSource: ["const"] },
+      ],
+    };
+
+    const result = validateGraphSchema(descriptor, registry);
+    expect(result.valid).toBe(true);
+  });
+
+  it("should validate when onDataSource is empty string (for Const nodes)", () => {
+    const registry = new OpRegistry().register(Op);
+
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        { name: "const", type: "Op", onDataSource: "" },
+        { name: "b", type: "Op", onDataSource: ["const"] },
+      ],
+    } as any;
+
+    const result = validateGraphSchema(descriptor, registry);
+    expect(result.valid).toBe(true);
+  });
 });
 
 describe("Graph Complexity", () => {
@@ -172,5 +202,29 @@ describe("Graph Complexity", () => {
     };
 
     expect(graphComplexity(descriptor)).toBe(2); // 2 nodes + 0 edges
+  });
+
+  it("should handle omitted onDataSource (for Const nodes)", () => {
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        { name: "const", type: "Op" },
+        { name: "b", type: "Op", onDataSource: ["const"] },
+      ],
+    };
+
+    expect(graphComplexity(descriptor)).toBe(3); // 2 nodes + 1 edge
+  });
+
+  it("should handle empty string onDataSource (for Const nodes)", () => {
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        { name: "const", type: "Op", onDataSource: "" },
+        { name: "b", type: "Op", onDataSource: ["const"] },
+      ],
+    } as any;
+
+    expect(graphComplexity(descriptor)).toBe(3); // 2 nodes + 1 edge
   });
 });

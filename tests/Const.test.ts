@@ -231,4 +231,59 @@ describe("Const", () => {
     expect(outputs.length).toBe(1);
     expect(outputs[0].zero).toBe(0);
   });
+
+  it("should work with JSON schema when onDataSource is omitted", async () => {
+    const registry = new OpRegistry().register(Const);
+
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        {
+          name: "const",
+          type: "Const",
+          init: { value: 100 },
+        },
+      ],
+    };
+
+    const outputs: any[] = [];
+    const g = Graph.fromJSON(descriptor, registry);
+
+    g.output((output) => {
+      outputs.push(output);
+    });
+
+    await g.onData(42);
+
+    expect(outputs.length).toBe(1);
+    expect(outputs[0].const).toBe(100);
+  });
+
+  it("should work with JSON schema when onDataSource is empty string", async () => {
+    const registry = new OpRegistry().register(Const);
+
+    const descriptor: GraphSchema = {
+      root: "tick",
+      nodes: [
+        {
+          name: "const",
+          type: "Const",
+          init: { value: 100 },
+          onDataSource: "",
+        },
+      ],
+    } as any;
+
+    const outputs: any[] = [];
+    const g = Graph.fromJSON(descriptor, registry);
+
+    g.output((output) => {
+      outputs.push(output);
+    });
+
+    await g.onData(42);
+
+    expect(outputs.length).toBe(1);
+    expect(outputs[0].const).toBe(100);
+  });
 });

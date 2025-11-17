@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Corr } from "../src/classes/Stats.js";
+import { Corr } from "../src/fn/Stats.js";
 
 function naiveCorr(
   valuesX: number[],

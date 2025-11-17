@@ -16,7 +16,7 @@
  */
 
 import { Graph } from "../src/flow/index.js";
-import { EMA, SMA } from "../src/classes/Foundation.js";
+import { EMA, SMA } from "../src/fn/Foundation.js";
 
 // Trivial computation nodes
 class Add {

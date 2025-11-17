@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { EWMA } from "../src/classes/Foundation.js";
+import { EWMA } from "../src/fn/Foundation.js";
 
 class NaiveEWMA {
   private readonly period: number;

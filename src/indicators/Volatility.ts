@@ -1,14 +1,15 @@
-import { Variance, EMA, Max, Min, Stddev, SMA } from "../classes/Foundation.js";
+import { EMA, Max, Min, SMA } from "../fn/Foundation.js";
+import { Variance, Stddev } from "../fn/Stats.js";
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../classes/Containers.js";
+import { CircularBuffer } from "../fn/Containers.js";
 import { wilders_factor } from "../utils/math.js";
 
 /**
  * Historical Volatility - stateful indicator.
  * Calculates annualized volatility using log returns and sample variance.
  */
-export class VOLATILITY {
+export class Volatility {
   private prevClose?: number;
   private variance: Variance;
   private annualizedDays: number;
@@ -37,14 +38,14 @@ export class VOLATILITY {
 }
 
 /**
- * Creates VOLATILITY closure for functional usage.
+ * Creates Volatility closure for functional usage.
  * @param opts Period and annualized days configuration
  * @returns Function that processes data and returns volatility
  */
-export function useVOLATILITY(
+export function useVolatility(
   opts: PeriodWith<"period"> & { annualizedDays?: number }
 ): (bar: BarWith<"close">) => number {
-  const instance = new VOLATILITY(opts);
+  const instance = new Volatility(opts);
   return (bar) => instance.onData(bar);
 }
 

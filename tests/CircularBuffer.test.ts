@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CircularBuffer } from "../src/classes/Containers.js";
+import { CircularBuffer } from "../src/fn/Containers.js";
 
 describe("CircularBuffer", () => {
   it("creates buffer with correct capacity", () => {

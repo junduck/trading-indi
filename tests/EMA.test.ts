@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { EMA, useEMA } from "../src/classes/Foundation.js";
+import { EMA, useEMA } from "../src/fn/Foundation.js";
 
 function naiveEMA(values: number[], period: number): number[] {
   const alpha = 2 / (period + 1);

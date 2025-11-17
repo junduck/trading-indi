@@ -14,7 +14,7 @@
  */
 
 import { Graph } from "../src/flow/index.js";
-import { EMA, SMA, Variance } from "../src/classes/Foundation.js";
+import { EMA, SMA, Variance } from "../src/fn/Foundation.js";
 
 // Simple stateless operations
 class Add {
@@ -62,7 +62,9 @@ function buildWideGraph(): Graph {
 
   // Layer 3: 10 combiners (join 2 EMAs each)
   for (let i = 0; i < 10; i++) {
-    graph.add(`comb_${i}`, new Combine()).depends(`ema_${i * 2}`, `ema_${i * 2 + 1}`);
+    graph
+      .add(`comb_${i}`, new Combine())
+      .depends(`ema_${i * 2}`, `ema_${i * 2 + 1}`);
   }
 
   return graph;
@@ -113,13 +115,16 @@ function buildDiamondGraph(): Graph {
     }
 
     // Fan in: 2 join nodes
-    graph.add(`L${layer}_join_0`, new Combine())
+    graph
+      .add(`L${layer}_join_0`, new Combine())
       .depends(`L${layer}_branch_0`, `L${layer}_branch_1`);
-    graph.add(`L${layer}_join_1`, new Combine())
+    graph
+      .add(`L${layer}_join_1`, new Combine())
       .depends(`L${layer}_branch_2`, `L${layer}_branch_3`);
 
     // Final join for this layer
-    graph.add(`join_${layer}`, new Spread())
+    graph
+      .add(`join_${layer}`, new Spread())
       .depends(`L${layer}_join_0`, `L${layer}_join_1`);
   }
 
@@ -220,7 +225,9 @@ async function runProfilingBenchmark() {
   console.log("=".repeat(60));
   console.log("Graph Profiling Benchmark");
   console.log("=".repeat(60));
-  console.log("\nRun with: NODE_OPTIONS=\"--prof\" tsx benchmarks/graph-profile.ts");
+  console.log(
+    '\nRun with: NODE_OPTIONS="--prof" tsx benchmarks/graph-profile.ts'
+  );
   console.log("Analyze:  node --prof-process isolate-*.log > profile.txt");
   console.log("");
 
@@ -231,16 +238,32 @@ async function runProfilingBenchmark() {
   }
 
   // Scenario 1: Wide parallelism
-  await benchmarkScenario("Scenario 1: Wide Parallelism (40 nodes)", buildWideGraph(), 5000);
+  await benchmarkScenario(
+    "Scenario 1: Wide Parallelism (40 nodes)",
+    buildWideGraph(),
+    5000
+  );
 
   // Scenario 2: Deep chain
-  await benchmarkScenario("Scenario 2: Deep Chain (50 nodes)", buildDeepGraph(), 5000);
+  await benchmarkScenario(
+    "Scenario 2: Deep Chain (50 nodes)",
+    buildDeepGraph(),
+    5000
+  );
 
   // Scenario 3: Diamond pattern
-  await benchmarkScenario("Scenario 3: Diamond Pattern (35 nodes)", buildDiamondGraph(), 5000);
+  await benchmarkScenario(
+    "Scenario 3: Diamond Pattern (35 nodes)",
+    buildDiamondGraph(),
+    5000
+  );
 
   // Scenario 4: Realistic graph
-  await benchmarkScenario("Scenario 4: Realistic Trading Graph (17 nodes)", buildRealisticGraph(), 10000);
+  await benchmarkScenario(
+    "Scenario 4: Realistic Trading Graph (17 nodes)",
+    buildRealisticGraph(),
+    10000
+  );
 
   // Scenario 5: Realistic with listeners
   await benchmarkScenario(
@@ -277,8 +300,14 @@ async function runProfilingBenchmark() {
 
   const stressElapsed = Date.now() - stressStart;
   console.log(`  Total time:  ${stressElapsed}ms`);
-  console.log(`  Avg time:    ${(stressElapsed / stressIterations).toFixed(4)}ms`);
-  console.log(`  Throughput:  ${(stressIterations / (stressElapsed / 1000)).toFixed(0)} ops/sec`);
+  console.log(
+    `  Avg time:    ${(stressElapsed / stressIterations).toFixed(4)}ms`
+  );
+  console.log(
+    `  Throughput:  ${(stressIterations / (stressElapsed / 1000)).toFixed(
+      0
+    )} ops/sec`
+  );
 
   console.log("\n" + "=".repeat(60));
   console.log("Benchmark complete - check profiling output");

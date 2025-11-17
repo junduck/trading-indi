@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { MinMax, useMinMax } from "../src/classes/Foundation.js";
+import { MinMax, useMinMax } from "../src/fn/Foundation.js";
 
 function naiveMinMax(
   values: number[]

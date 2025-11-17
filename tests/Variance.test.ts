@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Variance } from "../src/classes/Foundation.js";
+import { Variance } from "../src/fn/Stats.js";
 
 function naiveStats(
   values: number[],

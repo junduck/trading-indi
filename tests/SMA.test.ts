@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { SMA } from "../src/classes/Foundation.js";
+import { SMA } from "../src/fn/Foundation.js";
 
 function naiveSMA(values: number[]): number {
   const n = values.length;

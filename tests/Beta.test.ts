@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Beta, useBeta } from "../src/classes/Stats.js";
+import { Beta, useBeta } from "../src/fn/Stats.js";
 
 function naiveBeta(
   valuesX: number[],

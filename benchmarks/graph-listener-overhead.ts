@@ -8,7 +8,7 @@
  */
 
 import { Graph } from "../src/flow/index.js";
-import { EMA } from "../src/classes/Foundation.js";
+import { EMA } from "../src/fn/Foundation.js";
 
 class Add {
   constructor(private value: number) {}

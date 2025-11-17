@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Deque } from "../src/classes/Containers.js";
+import { Deque } from "../src/fn/Containers.js";
 
 describe("Deque", () => {
   it("creates deque with correct capacity", () => {
@@ -11,8 +11,12 @@ describe("Deque", () => {
   });
 
   it("throws error for invalid capacity", () => {
-    expect(() => new Deque<number>(0)).toThrow("Deque capacity must be positive");
-    expect(() => new Deque<number>(-10)).toThrow("Deque capacity must be positive");
+    expect(() => new Deque<number>(0)).toThrow(
+      "Deque capacity must be positive"
+    );
+    expect(() => new Deque<number>(-10)).toThrow(
+      "Deque capacity must be positive"
+    );
   });
 
   it("pushes to back and front", () => {

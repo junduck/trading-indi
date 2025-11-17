@@ -1,8 +1,8 @@
 import type { PeriodWith } from "../types/PeriodOptions.js";
 import type { BarWith } from "../types/BarData.js";
-import { CircularBuffer } from "../classes/Containers.js";
+import { CircularBuffer } from "../fn/Containers.js";
 import { wilders_factor, SmoothedAccum } from "../utils/math.js";
-import { EMA, SMA } from "../classes/Foundation.js";
+import { EMA, SMA } from "../fn/Foundation.js";
 
 /**
  * Balance of Power - measures buying vs selling pressure.

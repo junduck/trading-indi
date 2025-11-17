@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { EMA, MinMax, SMA } from "../classes/Foundation.js";
-import { CircularBuffer } from "../classes/Containers.js";
+import { EMA, MinMax, SMA } from "../fn/Foundation.js";
+import { CircularBuffer } from "../fn/Containers.js";
 
 /**
  * Awesome Oscillator - stateful indicator.

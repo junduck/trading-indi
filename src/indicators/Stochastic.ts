@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodOptions, PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../classes/Containers.js";
-import { SMA } from "../classes/Foundation.js";
+import { CircularBuffer } from "../fn/Containers.js";
+import { SMA } from "../fn/Foundation.js";
 import { RSI } from "./Momentum.js";
 
 /**

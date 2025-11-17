@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { Cov } from "../src/classes/Stats.js";
+import { Cov } from "../src/fn/Stats.js";
 
 function naiveCov(
   valuesX: number[],

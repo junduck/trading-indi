@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Graph, makeOp } from "../src/flow/Graph.js";
-import { EMA, SMA } from "../src/classes/Foundation.js";
+import { EMA, SMA } from "../src/fn/Foundation.js";
 
 describe("Graph", () => {
   it.concurrent(
@@ -389,50 +389,47 @@ describe("Graph", () => {
     expect(smaUpdates).toEqual([100]);
   });
 
-  it.skip(
-    "should execute independent async nodes concurrently",
-    async () => {
-      const outputs: any[] = [];
-      const executionOrder: string[] = [];
+  it.skip("should execute independent async nodes concurrently", async () => {
+    const outputs: any[] = [];
+    const executionOrder: string[] = [];
 
-      class AsyncNode {
-        constructor(private name: string, private delay: number) {}
+    class AsyncNode {
+      constructor(private name: string, private delay: number) {}
 
-        async onData(value: number): Promise<number> {
-          executionOrder.push(`${this.name}-start`);
-          await new Promise((resolve) => setTimeout(resolve, this.delay));
-          executionOrder.push(`${this.name}-end`);
-          return value * 2;
-        }
+      async onData(value: number): Promise<number> {
+        executionOrder.push(`${this.name}-start`);
+        await new Promise((resolve) => setTimeout(resolve, this.delay));
+        executionOrder.push(`${this.name}-end`);
+        return value * 2;
       }
-
-      const g = new Graph("tick");
-
-      g.add("slow", new AsyncNode("slow", 50))
-        .depends("tick")
-        .add("fast", new AsyncNode("fast", 10))
-        .depends("tick")
-        .add("sum", { onData: (a: number, b: number) => a + b })
-        .depends("slow", "fast")
-        .output((output) => {
-          outputs.push(output);
-        });
-
-      const start = Date.now();
-      await g.onData(10);
-      const duration = Date.now() - start;
-
-      expect(outputs.length).toBe(1);
-      expect(outputs[0].slow).toBe(20);
-      expect(outputs[0].fast).toBe(20);
-      expect(outputs[0].sum).toBe(40);
-
-      expect(executionOrder[0]).toBe("slow-start");
-      expect(executionOrder[1]).toBe("fast-start");
-      expect(executionOrder[2]).toBe("fast-end");
-      expect(executionOrder[3]).toBe("slow-end");
-
-      expect(duration).toBeLessThan(100);
     }
-  );
+
+    const g = new Graph("tick");
+
+    g.add("slow", new AsyncNode("slow", 50))
+      .depends("tick")
+      .add("fast", new AsyncNode("fast", 10))
+      .depends("tick")
+      .add("sum", { onData: (a: number, b: number) => a + b })
+      .depends("slow", "fast")
+      .output((output) => {
+        outputs.push(output);
+      });
+
+    const start = Date.now();
+    await g.onData(10);
+    const duration = Date.now() - start;
+
+    expect(outputs.length).toBe(1);
+    expect(outputs[0].slow).toBe(20);
+    expect(outputs[0].fast).toBe(20);
+    expect(outputs[0].sum).toBe(40);
+
+    expect(executionOrder[0]).toBe("slow-start");
+    expect(executionOrder[1]).toBe("fast-start");
+    expect(executionOrder[2]).toBe("fast-end");
+    expect(executionOrder[3]).toBe("slow-end");
+
+    expect(duration).toBeLessThan(100);
+  });
 });

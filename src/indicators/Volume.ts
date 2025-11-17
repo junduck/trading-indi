@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../classes/Containers.js";
-import { EMA, Sum } from "../classes/Foundation.js";
+import { CircularBuffer } from "../fn/Containers.js";
+import { EMA, Sum } from "../fn/Foundation.js";
 
 /**
  * Accumulation/Distribution - stateful indicator.
@@ -369,11 +369,11 @@ export function useEMV(): (bar: BarWith<"high" | "low" | "volume">) => number {
  * Market Facilitation Index - stateless indicator.
  * Measures price movement efficiency per volume unit.
  */
-export class MARKETFI {
+export class MarketFI {
   /**
    * Process new bar data.
    * @param bar Bar data with high, low, volume
-   * @returns Current MARKETFI value
+   * @returns Current MarketFI value
    */
   onData(bar: BarWith<"high" | "low" | "volume">): number {
     return bar.volume !== 0 ? (bar.high - bar.low) / bar.volume : 0;
@@ -381,13 +381,13 @@ export class MARKETFI {
 }
 
 /**
- * Creates MARKETFI closure for functional usage.
- * @returns Function that processes bar data and returns MARKETFI
+ * Creates MarketFI closure for functional usage.
+ * @returns Function that processes bar data and returns MarketFI
  */
-export function useMARKETFI(): (
+export function useMarketFI(): (
   bar: BarWith<"high" | "low" | "volume">
 ) => number {
-  const instance = new MARKETFI();
+  const instance = new MarketFI();
   return (bar) => instance.onData(bar);
 }
 

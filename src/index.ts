@@ -1,43 +1,10 @@
 export type { PeriodOptions } from "./types/PeriodOptions.js";
 export type { BarData, BarWith } from "./types/BarData.js";
-
-export { CircularBuffer, Deque } from "./classes/Containers.js";
-
-export {
-  EMA,
-  useEMA,
-  EWMA,
-  useEWMA,
-  SMA,
-  useSMA,
-  Variance,
-  useVariance,
-  Stddev,
-  useStddev,
-  Min,
-  useMin,
-  Max,
-  useMax,
-  Sum,
-  useSum,
-  MinMax,
-  useMinMax,
-} from "./classes/Foundation.js";
+export * as fn from "./fn/index.js";
 
 export {
-  VarianceEW,
-  useVarianceEW,
-  Cov,
-  useCov,
-  Corr,
-  useCorr,
-  Beta,
-  useBeta,
-} from "./classes/Stats.js";
-
-export {
-  VOLATILITY,
-  useVOLATILITY,
+  Volatility,
+  useVolatility,
   CVI,
   useCVI,
   MASS,
@@ -132,8 +99,8 @@ export {
   useMFI,
   EMV,
   useEMV,
-  MARKETFI,
-  useMARKETFI,
+  MarketFI,
+  useMarketFI,
   VOSC,
   useVOSC,
   CMF,

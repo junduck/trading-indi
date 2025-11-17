@@ -1,5 +1,5 @@
 import type { BarData } from "../src/types/BarData.js";
-import { EMA, SMA, Variance, MinMax } from "../src/classes/Foundation.js";
+import { EMA, SMA, Variance, MinMax } from "../src/fn/Foundation.js";
 import {
   VOLATILITY,
   CVI,

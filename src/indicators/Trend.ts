@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../classes/Containers.js";
-import { EMA, SMA, Sum } from "../classes/Foundation.js";
+import { CircularBuffer } from "../fn/Containers.js";
+import { EMA, SMA, Sum } from "../fn/Foundation.js";
 import { ATR, PriceChannel } from "./Volatility.js";
 import { wilders_factor } from "../utils/math.js";
 

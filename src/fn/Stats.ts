@@ -3,6 +3,144 @@ import { exp_factor, Kahan, SmoothedAccum } from "../utils/math.js";
 import { CircularBuffer } from "./Containers.js";
 
 /**
+ * Variance - stateful indicator.
+ * Uses Welford's online algorithm for numerical stability.
+ * Supports Delta Degrees of Freedom (ddof) for sample variance.
+ */
+export class Variance {
+  readonly buffer: CircularBuffer<number>;
+  private m: Kahan = new Kahan();
+  private m2: Kahan = new Kahan();
+  private ddof: number;
+  private weight: number;
+  private varWeight: number;
+
+  constructor(opts: PeriodWith<"period"> & { ddof?: number }) {
+    this.ddof = opts.ddof ?? 0;
+    if (opts.period <= this.ddof) {
+      throw new Error("Period should be larger than DDoF.");
+    }
+    this.buffer = new CircularBuffer<number>(opts.period);
+    this.weight = 1.0 / opts.period;
+    this.varWeight = 1.0 / (opts.period - this.ddof);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Object with mean and variance
+   */
+  onData(x: number): { mean: number; variance: number } {
+    if (!this.buffer.full()) {
+      this.buffer.push(x);
+      const delta = x - this.m.val;
+      this.m.accum(delta / this.buffer.size());
+      this.m2.accum((x - this.m.val) * delta);
+      if (this.buffer.size() <= this.ddof) {
+        return { mean: this.m.val, variance: 0 };
+      } else {
+        return {
+          mean: this.m.val,
+          variance: this.m2.val / (this.buffer.size() - this.ddof),
+        };
+      }
+    } else {
+      const x0 = this.buffer.front()!;
+      const d = x - this.m.val;
+      const d0 = x0 - this.m.val;
+      const dx = x - x0;
+      this.m.accum(this.weight * dx);
+      this.m2.accum(dx * (d + d0) - this.weight * dx * dx);
+      this.buffer.push(x);
+      return { mean: this.m.val, variance: this.m2.val * this.varWeight };
+    }
+  }
+}
+
+/**
+ * Creates Variance closure for functional usage.
+ * @param opts Period and ddof configuration
+ * @returns Function that processes data and returns {m, var}
+ */
+export function useVariance(
+  opts: PeriodWith<"period"> & { ddof?: number }
+): (x: number) => { mean: number; variance: number } {
+  const instance = new Variance(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
+ * Standard Deviation - stateful indicator.
+ * Uses Welford's online algorithm via Variance for numerical stability.
+ * Supports Delta Degrees of Freedom (ddof) for sample standard deviation.
+ */
+export class Stddev {
+  private readonly variance: Variance;
+
+  constructor(opts: PeriodWith<"period"> & { ddof?: number }) {
+    this.variance = new Variance(opts);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Object with mean and standard deviation
+   */
+  onData(x: number): { mean: number; stddev: number } {
+    const { mean, variance } = this.variance.onData(x);
+    return { mean, stddev: Math.sqrt(variance) };
+  }
+}
+
+/**
+ * Creates Stddev closure for functional usage.
+ * @param opts Period and ddof configuration
+ * @returns Function that processes data and returns {mean, stddev}
+ */
+export function useStddev(
+  opts: PeriodWith<"period"> & { ddof?: number }
+): (x: number) => { mean: number; stddev: number } {
+  const instance = new Stddev(opts);
+  return (x: number) => instance.onData(x);
+}
+
+/**
+ * Z-Score - statistical measure of deviation from mean.
+ * Measures how many standard deviations a value is from the mean.
+ */
+export class ZScore {
+  private stddev: Stddev;
+
+  constructor(opts: PeriodWith<"period">) {
+    this.stddev = new Stddev({ period: opts.period, ddof: 0 });
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Z-Score value
+   */
+  onData(x: number): number {
+    const { mean, stddev } = this.stddev.onData(x);
+    if (stddev === 0) {
+      return 0;
+    }
+
+    return (x - mean) / stddev;
+  }
+}
+
+/**
+ * Creates Zscore closure for functional usage.
+ * @param opts Period configuration
+ * @returns Function that processes bar data and returns Z-Score
+ */
+export function useZScore(opts: PeriodWith<"period">): (x: number) => number {
+  const instance = new ZScore(opts);
+  return (bar) => instance.onData(bar);
+}
+
+/**
  * Exponentially Weighted Variance - stateful indicator.
  * Tracks both mean and variance with alpha = 2/(period+1).
  */
@@ -50,6 +188,28 @@ export function useVarianceEW(
 ): (x: number) => { mean: number; variance: number } {
   const instance = new VarianceEW(opts);
   return (x: number) => instance.onData(x);
+}
+
+export class ZScoreEW {
+  private var: VarianceEW;
+
+  constructor(opts: PeriodOptions & { alpha?: number }) {
+    this.var = new VarianceEW(opts);
+  }
+
+  /**
+   * Process new data point.
+   * @param x New value
+   * @returns Z-Score value
+   */
+  onData(x: number): number {
+    const { mean, variance } = this.var.onData(x);
+    if (variance === 0) {
+      return 0;
+    }
+
+    return (x - mean) / Math.sqrt(variance);
+  }
 }
 
 /**

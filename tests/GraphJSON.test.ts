@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Graph, OpRegistry, type GraphDescriptor } from "../src/flow/index.js";
-import { EMA } from "../src/classes/Foundation.js";
+import { EMA } from "../src/fn/Foundation.js";
 
 describe("Graph JSON Serialization", () => {
   it("should construct graph from JSON descriptor", async () => {

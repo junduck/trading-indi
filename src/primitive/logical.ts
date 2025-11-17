@@ -305,15 +305,3 @@ export class Coalesce {
     output: "first non-null",
   };
 }
-
-export class Select {
-  onData<T>(index: number, ...options: T[]): T {
-    return options[index]!;
-  }
-
-  static readonly doc: OperatorDoc = {
-    type: "Select",
-    onDataParam: "index, ...options",
-    output: "options[index]",
-  };
-}

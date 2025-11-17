@@ -63,13 +63,13 @@ export type GraphUpdateListener = (
   result: any
 ) => void | Promise<void>;
 
-export type ValidationError =
+export type GraphValidationError =
   | { type: "cycle"; nodes: string[] }
   | { type: "unreachable"; node: string[] };
 
-export interface ValidationResult {
+export interface GraphValidationResult {
   valid: boolean;
-  errors: ValidationError[];
+  errors: GraphValidationError[];
 }
 
 /**
@@ -179,8 +179,8 @@ export class Graph {
   }
 
   /** Validate that the graph is acyclic (DAG) and all nodes are reachable. */
-  validate(): ValidationResult {
-    const errors: ValidationError[] = [];
+  validate(): GraphValidationResult {
+    const errors: GraphValidationError[] = [];
 
     // Cycle detection using DFS
     const WHITE = 0;

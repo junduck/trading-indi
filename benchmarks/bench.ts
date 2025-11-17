@@ -1,73 +1,7 @@
 import type { BarData } from "../src/types/BarData.js";
-import { EMA, SMA, Variance, MinMax } from "../src/fn/Foundation.js";
-import {
-  VOLATILITY,
-  CVI,
-  MASS,
-  TR,
-  ATR,
-  NATR,
-  PriceChannel,
-  BBANDS,
-  KC,
-  DC,
-} from "../src/indicators/Volatility.js";
-import {
-  BOP,
-  MOM,
-  ROC,
-  ROCR,
-  RSI,
-  CMO,
-  WAD,
-  RVI,
-  TSI,
-  BBPOWER,
-} from "../src/indicators/Momentum.js";
-import {
-  AO,
-  APO,
-  DPO,
-  Fisher,
-  MACD,
-  PPO,
-  QSTICK,
-  TRIX,
-  ULTOSC,
-} from "../src/indicators/Oscillators.js";
-import { STOCH, STOCHRSI, WILLR } from "../src/indicators/Stochastic.js";
-import {
-  AROON,
-  AROONOSC,
-  CCI,
-  VHF,
-  DM,
-  DI,
-  DX,
-  ADX,
-  ADXR,
-  SAR,
-  VI,
-  ICHIMOKU,
-} from "../src/indicators/Trend.js";
-import {
-  AD,
-  ADOSC,
-  KVO,
-  NVI,
-  OBV,
-  PVI,
-  MFI,
-  EMV,
-  MARKETFI,
-  VOSC,
-  CMF,
-  CHO,
-  PVO,
-  FI,
-  VROC,
-  PVT,
-} from "../src/indicators/Volume.js";
+import { EMA, SMA, MinMax } from "../src/fn/Foundation.js";
+import { Variance } from "../src/fn/Stats.js";
+import * as ti from "../src/index.js";
 
 function generateOHLCV(count: number): BarData[] {
   const bars: BarData[] = [];
@@ -120,74 +54,74 @@ function createIndicators(): Indicator[] {
   indicators.push({ name: "Variance", instance: new Variance(PERIODS) });
   indicators.push({ name: "MinMax", instance: new MinMax(PERIODS) });
 
-  indicators.push({ name: "VOLATILITY", instance: new VOLATILITY(PERIODS) });
-  indicators.push({ name: "CVI", instance: new CVI(PERIODS) });
-  indicators.push({ name: "MASS", instance: new MASS(PERIODS) });
-  indicators.push({ name: "TR", instance: new TR() });
-  indicators.push({ name: "ATR", instance: new ATR(PERIODS) });
-  indicators.push({ name: "NATR", instance: new NATR(PERIODS) });
+  indicators.push({ name: "VOLATILITY", instance: new ti.Volatility(PERIODS) });
+  indicators.push({ name: "CVI", instance: new ti.CVI(PERIODS) });
+  indicators.push({ name: "MASS", instance: new ti.MASS(PERIODS) });
+  indicators.push({ name: "TR", instance: new ti.TR() });
+  indicators.push({ name: "ATR", instance: new ti.ATR(PERIODS) });
+  indicators.push({ name: "NATR", instance: new ti.NATR(PERIODS) });
   indicators.push({
     name: "PriceChannel",
-    instance: new PriceChannel(PERIODS),
+    instance: new ti.PriceChannel(PERIODS),
   });
-  indicators.push({ name: "BBANDS", instance: new BBANDS(PERIODS) });
-  indicators.push({ name: "KC", instance: new KC(PERIODS) });
-  indicators.push({ name: "DC", instance: new DC(PERIODS) });
+  indicators.push({ name: "BBANDS", instance: new ti.BBANDS(PERIODS) });
+  indicators.push({ name: "KC", instance: new ti.KC(PERIODS) });
+  indicators.push({ name: "DC", instance: new ti.DC(PERIODS) });
 
-  indicators.push({ name: "BOP", instance: new BOP() });
-  indicators.push({ name: "MOM", instance: new MOM(PERIODS) });
-  indicators.push({ name: "ROC", instance: new ROC(PERIODS) });
-  indicators.push({ name: "ROCR", instance: new ROCR(PERIODS) });
-  indicators.push({ name: "RSI", instance: new RSI(PERIODS) });
-  indicators.push({ name: "CMO", instance: new CMO(PERIODS) });
-  indicators.push({ name: "WAD", instance: new WAD() });
-  indicators.push({ name: "RVI", instance: new RVI(PERIODS) });
-  indicators.push({ name: "TSI", instance: new TSI() });
-  indicators.push({ name: "BBPOWER", instance: new BBPOWER(PERIODS) });
+  indicators.push({ name: "BOP", instance: new ti.BOP() });
+  indicators.push({ name: "MOM", instance: new ti.MOM(PERIODS) });
+  indicators.push({ name: "ROC", instance: new ti.ROC(PERIODS) });
+  indicators.push({ name: "ROCR", instance: new ti.ROCR(PERIODS) });
+  indicators.push({ name: "RSI", instance: new ti.RSI(PERIODS) });
+  indicators.push({ name: "CMO", instance: new ti.CMO(PERIODS) });
+  indicators.push({ name: "WAD", instance: new ti.WAD() });
+  indicators.push({ name: "RVI", instance: new ti.RVI(PERIODS) });
+  indicators.push({ name: "TSI", instance: new ti.TSI() });
+  indicators.push({ name: "BBPOWER", instance: new ti.BBPOWER(PERIODS) });
 
-  indicators.push({ name: "AO", instance: new AO() });
-  indicators.push({ name: "APO", instance: new APO(PERIODS) });
-  indicators.push({ name: "DPO", instance: new DPO(PERIODS) });
-  indicators.push({ name: "Fisher", instance: new Fisher(PERIODS) });
-  indicators.push({ name: "MACD", instance: new MACD(PERIODS) });
-  indicators.push({ name: "PPO", instance: new PPO(PERIODS) });
-  indicators.push({ name: "QSTICK", instance: new QSTICK(PERIODS) });
-  indicators.push({ name: "TRIX", instance: new TRIX(PERIODS) });
-  indicators.push({ name: "ULTOSC", instance: new ULTOSC(PERIODS) });
+  indicators.push({ name: "AO", instance: new ti.AO() });
+  indicators.push({ name: "APO", instance: new ti.APO(PERIODS) });
+  indicators.push({ name: "DPO", instance: new ti.DPO(PERIODS) });
+  indicators.push({ name: "Fisher", instance: new ti.Fisher(PERIODS) });
+  indicators.push({ name: "MACD", instance: new ti.MACD(PERIODS) });
+  indicators.push({ name: "PPO", instance: new ti.PPO(PERIODS) });
+  indicators.push({ name: "QSTICK", instance: new ti.QSTICK(PERIODS) });
+  indicators.push({ name: "TRIX", instance: new ti.TRIX(PERIODS) });
+  indicators.push({ name: "ULTOSC", instance: new ti.ULTOSC(PERIODS) });
 
-  indicators.push({ name: "STOCH", instance: new STOCH(PERIODS) });
-  indicators.push({ name: "STOCHRSI", instance: new STOCHRSI(PERIODS) });
-  indicators.push({ name: "WILLR", instance: new WILLR(PERIODS) });
+  indicators.push({ name: "STOCH", instance: new ti.STOCH(PERIODS) });
+  indicators.push({ name: "STOCHRSI", instance: new ti.STOCHRSI(PERIODS) });
+  indicators.push({ name: "WILLR", instance: new ti.WILLR(PERIODS) });
 
-  indicators.push({ name: "AROON", instance: new AROON(PERIODS) });
-  indicators.push({ name: "AROONOSC", instance: new AROONOSC(PERIODS) });
-  indicators.push({ name: "CCI", instance: new CCI(PERIODS) });
-  indicators.push({ name: "VHF", instance: new VHF(PERIODS) });
-  indicators.push({ name: "DM", instance: new DM(PERIODS) });
-  indicators.push({ name: "DI", instance: new DI(PERIODS) });
-  indicators.push({ name: "DX", instance: new DX(PERIODS) });
-  indicators.push({ name: "ADX", instance: new ADX(PERIODS) });
-  indicators.push({ name: "ADXR", instance: new ADXR(PERIODS) });
-  indicators.push({ name: "SAR", instance: new SAR() });
-  indicators.push({ name: "VI", instance: new VI(PERIODS) });
-  indicators.push({ name: "ICHIMOKU", instance: new ICHIMOKU() });
+  indicators.push({ name: "AROON", instance: new ti.AROON(PERIODS) });
+  indicators.push({ name: "AROONOSC", instance: new ti.AROONOSC(PERIODS) });
+  indicators.push({ name: "CCI", instance: new ti.CCI(PERIODS) });
+  indicators.push({ name: "VHF", instance: new ti.VHF(PERIODS) });
+  indicators.push({ name: "DM", instance: new ti.DM(PERIODS) });
+  indicators.push({ name: "DI", instance: new ti.DI(PERIODS) });
+  indicators.push({ name: "DX", instance: new ti.DX(PERIODS) });
+  indicators.push({ name: "ADX", instance: new ti.ADX(PERIODS) });
+  indicators.push({ name: "ADXR", instance: new ti.ADXR(PERIODS) });
+  indicators.push({ name: "SAR", instance: new ti.SAR() });
+  indicators.push({ name: "VI", instance: new ti.VI(PERIODS) });
+  indicators.push({ name: "ICHIMOKU", instance: new ti.ICHIMOKU() });
 
-  indicators.push({ name: "AD", instance: new AD() });
-  indicators.push({ name: "ADOSC", instance: new ADOSC(PERIODS) });
-  indicators.push({ name: "KVO", instance: new KVO(PERIODS) });
-  indicators.push({ name: "NVI", instance: new NVI() });
-  indicators.push({ name: "OBV", instance: new OBV() });
-  indicators.push({ name: "PVI", instance: new PVI() });
-  indicators.push({ name: "MFI", instance: new MFI(PERIODS) });
-  indicators.push({ name: "EMV", instance: new EMV() });
-  indicators.push({ name: "MARKETFI", instance: new MARKETFI() });
-  indicators.push({ name: "VOSC", instance: new VOSC(PERIODS) });
-  indicators.push({ name: "CMF", instance: new CMF(PERIODS) });
-  indicators.push({ name: "CHO", instance: new CHO(PERIODS) });
-  indicators.push({ name: "PVO", instance: new PVO(PERIODS) });
-  indicators.push({ name: "FI", instance: new FI(PERIODS) });
-  indicators.push({ name: "VROC", instance: new VROC(PERIODS) });
-  indicators.push({ name: "PVT", instance: new PVT() });
+  indicators.push({ name: "AD", instance: new ti.AD() });
+  indicators.push({ name: "ADOSC", instance: new ti.ADOSC(PERIODS) });
+  indicators.push({ name: "KVO", instance: new ti.KVO(PERIODS) });
+  indicators.push({ name: "NVI", instance: new ti.NVI() });
+  indicators.push({ name: "OBV", instance: new ti.OBV() });
+  indicators.push({ name: "PVI", instance: new ti.PVI() });
+  indicators.push({ name: "MFI", instance: new ti.MFI(PERIODS) });
+  indicators.push({ name: "EMV", instance: new ti.EMV() });
+  indicators.push({ name: "MARKETFI", instance: new ti.MarketFI() });
+  indicators.push({ name: "VOSC", instance: new ti.VOSC(PERIODS) });
+  indicators.push({ name: "CMF", instance: new ti.CMF(PERIODS) });
+  indicators.push({ name: "CHO", instance: new ti.CHO(PERIODS) });
+  indicators.push({ name: "PVO", instance: new ti.PVO(PERIODS) });
+  indicators.push({ name: "FI", instance: new ti.FI(PERIODS) });
+  indicators.push({ name: "VROC", instance: new ti.VROC(PERIODS) });
+  indicators.push({ name: "PVT", instance: new ti.PVT() });
 
   return indicators;
 }

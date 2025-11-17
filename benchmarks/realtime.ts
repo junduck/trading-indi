@@ -1,6 +1,7 @@
 import type { BarData } from "../src/types/BarData.js";
-import { EMA, SMA, Variance, MinMax } from "../src/fn/Foundation.js";
-import { VOLATILITY, ATR, BBANDS } from "../src/indicators/Volatility.js";
+import { EMA, SMA } from "../src/fn/Foundation.js";
+import { Volatility, ATR, BBANDS } from "../src/indicators/Volatility.js";
+import { Variance } from "../src/fn/Stats.js";
 import { RSI, CMO } from "../src/indicators/Momentum.js";
 import { MACD } from "../src/indicators/Oscillators.js";
 import { STOCH, WILLR } from "../src/indicators/Stochastic.js";
@@ -59,7 +60,7 @@ const tradingStrategies = [
       { name: "EMA", instance: new EMA({ period: 10 }) },
       { name: "ATR", instance: new ATR({ period: 14 }) },
       { name: "RSI", instance: new RSI({ period: 14 }) },
-      { name: "VOLATILITY", instance: new VOLATILITY({ period: 20 }) },
+      { name: "VOLATILITY", instance: new Volatility({ period: 20 }) },
       { name: "OBV", instance: new OBV() },
     ],
   },

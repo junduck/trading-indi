@@ -10,7 +10,8 @@
  */
 
 import { Graph } from "../src/flow/index.js";
-import { EMA, SMA, Variance } from "../src/fn/Foundation.js";
+import { EMA, SMA } from "../src/fn/Foundation.js";
+import { Variance } from "../src/fn/Stats.js";
 
 class Add {
   constructor(private value: number) {}

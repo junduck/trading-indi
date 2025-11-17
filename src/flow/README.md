@@ -44,16 +44,16 @@ await graph.onData(100);
 ### JSON Configuration
 
 ```typescript
-import { Graph, OpRegistry, GraphDescriptor } from "@junduck/trading-indi/flow";
+import { Graph, OpRegistry, GraphSchema } from "@junduck/trading-indi/flow";
 import { EMA, SMA } from "@junduck/trading-indi";
 
 // Register operators
 const registry = new OpRegistry()
-  .register("EMA", EMA)
-  .register("SMA", SMA);
+  .register(EMA)
+  .register(SMA);
 
 // Describe the DAG
-const config: GraphDescriptor = {
+const config: GraphSchema = {
   root: "tick",
   nodes: [
     {
@@ -176,10 +176,10 @@ Events are emitted only when operators produce non-undefined results. Listeners 
 - `get(name)` - Get constructor by name
 - `has(name)` - Check if type exists
 
-### OpDescriptor
+### OpSchema
 
 ```typescript
-interface OpDescriptor {
+interface OpSchema {
   name: string;      // Node name in graph
   type: string;      // Type name in registry
   init?: any;        // Constructor parameters
@@ -187,12 +187,12 @@ interface OpDescriptor {
 }
 ```
 
-### GraphDescriptor
+### GraphSchema
 
 ```typescript
-interface GraphDescriptor {
+interface GraphSchema {
   root: string;            // Root node name
-  nodes: OpDescriptor[];   // Operator configurations
+  nodes: OpSchema[];   // Operator configurations
 }
 ```
 
@@ -266,7 +266,7 @@ class CrossOver {
   }
 }
 
-registry.register("CrossOver", CrossOver);
+registry.register(CrossOver);
 ```
 
 Then use it in your DAG:

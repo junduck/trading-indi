@@ -5,12 +5,37 @@ import {
   validateGraphSchema,
   graphComplexity,
 } from "../src/flow/index.js";
+import type { OperatorDoc } from "../src/types/OpDoc.js";
+
+class EMA {
+  static readonly doc: OperatorDoc = {
+    type: "EMA",
+    onDataParam: "x: number",
+    output: "number",
+  };
+}
+
+class SMA {
+  static readonly doc: OperatorDoc = {
+    type: "SMA",
+    onDataParam: "x: number",
+    output: "number",
+  };
+}
+
+class Op {
+  static readonly doc: OperatorDoc = {
+    type: "Op",
+    onDataParam: "...args: any[]",
+    output: "any",
+  };
+}
 
 describe("Graph Validation", () => {
   it("should validate a valid graph", () => {
     const registry = new OpRegistry()
-      .register("EMA", class {})
-      .register("SMA", class {});
+      .register(EMA)
+      .register(SMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -26,7 +51,7 @@ describe("Graph Validation", () => {
   });
 
   it("should detect unknown type", () => {
-    const registry = new OpRegistry().register("EMA", class {});
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -39,7 +64,7 @@ describe("Graph Validation", () => {
   });
 
   it("should detect missing dependency", () => {
-    const registry = new OpRegistry().register("EMA", class {});
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -54,7 +79,7 @@ describe("Graph Validation", () => {
   });
 
   it("should handle path dependencies", () => {
-    const registry = new OpRegistry().register("EMA", class {});
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -66,7 +91,7 @@ describe("Graph Validation", () => {
   });
 
   it("should detect missing dependency when root is different", () => {
-    const registry = new OpRegistry().register("EMA", class {});
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "price",
@@ -81,7 +106,7 @@ describe("Graph Validation", () => {
   });
 
   it("should detect cycle", () => {
-    const registry = new OpRegistry().register("Op", class {});
+    const registry = new OpRegistry().register(Op);
 
     const descriptor: GraphSchema = {
       root: "a",
@@ -98,7 +123,7 @@ describe("Graph Validation", () => {
   });
 
   it("should allow valid DAG", () => {
-    const registry = new OpRegistry().register("Op", class {});
+    const registry = new OpRegistry().register(Op);
 
     const descriptor: GraphSchema = {
       root: "tick",

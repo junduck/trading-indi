@@ -1,10 +1,11 @@
 import { describe, expect, it } from "vitest";
 import { Graph, OpRegistry, type GraphSchema } from "../src/flow/index.js";
 import { EMA } from "../src/fn/Foundation.js";
+import type { OperatorDoc } from "../src/types/OpDoc.js";
 
 describe("Graph JSON Serialization", () => {
   it("should construct graph from JSON descriptor", async () => {
-    const registry = new OpRegistry().register("EMA", EMA);
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -36,7 +37,7 @@ describe("Graph JSON Serialization", () => {
   });
 
   it("should handle multiple nodes and dependencies", async () => {
-    const registry = new OpRegistry().register("EMA", EMA);
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -74,7 +75,7 @@ describe("Graph JSON Serialization", () => {
   });
 
   it("should support property access in input paths", async () => {
-    const registry = new OpRegistry().register("EMA", EMA);
+    const registry = new OpRegistry().register(EMA);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -106,14 +107,20 @@ describe("Graph JSON Serialization", () => {
 
   it("should handle nodes with multiple dependencies", async () => {
     class Subtract {
+      static readonly doc: OperatorDoc = {
+        type: "Subtract",
+        onDataParam: "a: number, b: number",
+        output: "number",
+      };
+
       onData(a: number, b: number): number {
         return a - b;
       }
     }
 
     const registry = new OpRegistry()
-      .register("EMA", EMA)
-      .register("Subtract", Subtract);
+      .register(EMA)
+      .register(Subtract);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -175,12 +182,18 @@ describe("Graph JSON Serialization", () => {
 
   it("should handle nodes without init params", async () => {
     class Identity {
+      static readonly doc: OperatorDoc = {
+        type: "Identity",
+        onDataParam: "x: number",
+        output: "number",
+      };
+
       onData(x: number): number {
         return x;
       }
     }
 
-    const registry = new OpRegistry().register("Identity", Identity);
+    const registry = new OpRegistry().register(Identity);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -208,21 +221,33 @@ describe("Graph JSON Serialization", () => {
 
   it("should work with complex graph structures", async () => {
     class Multiply {
+      static readonly doc: OperatorDoc = {
+        type: "Multiply",
+        onDataParam: "a: number, b: number",
+        output: "number",
+      };
+
       onData(a: number, b: number): number {
         return a * b;
       }
     }
 
     class Subtract {
+      static readonly doc: OperatorDoc = {
+        type: "Subtract",
+        onDataParam: "a: number, b: number",
+        output: "number",
+      };
+
       onData(a: number, b: number): number {
         return a - b;
       }
     }
 
     const registry = new OpRegistry()
-      .register("EMA", EMA)
-      .register("Multiply", Multiply)
-      .register("Subtract", Subtract);
+      .register(EMA)
+      .register(Multiply)
+      .register(Subtract);
 
     const descriptor: GraphSchema = {
       root: "tick",

@@ -29,53 +29,62 @@ export class OHLCV {
   }
 
   /**
-   * Process new tick data.
-   * @param tick Tick with timestamp, price, and volume
+   * Process new tick data with numeric parameters.
+   * @param timestamp Tick timestamp
+   * @param price Tick price
+   * @param volume Tick volume
    * @returns Completed OHLCV bar or undefined if bar still in progress
    */
-  onData(tick: OHLCVTick): OHLCVBar | undefined {
-    const tickTime = tick.timestamp;
-
+  update(timestamp: number, price: number, volume: number): OHLCVBar | undefined {
     if (!this.currentBar || !this.intervalStart) {
       // First tick - initialize new bar
-      this.intervalStart = this.alignTimestamp(tickTime);
+      this.intervalStart = this.alignTimestamp(timestamp);
       this.currentBar = {
         timestamp: this.intervalStart,
-        open: tick.price,
-        high: tick.price,
-        low: tick.price,
-        close: tick.price,
-        volume: tick.volume,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: volume,
       };
       return undefined;
     }
 
     const expectedIntervalEnd = this.intervalStart + this.intervalMs;
 
-    if (tickTime >= expectedIntervalEnd) {
+    if (timestamp >= expectedIntervalEnd) {
       // New interval - complete current bar and start new one
       const completedBar = { ...this.currentBar };
 
-      this.intervalStart = this.alignTimestamp(tickTime);
+      this.intervalStart = this.alignTimestamp(timestamp);
       this.currentBar = {
         timestamp: this.intervalStart,
-        open: tick.price,
-        high: tick.price,
-        low: tick.price,
-        close: tick.price,
-        volume: tick.volume,
+        open: price,
+        high: price,
+        low: price,
+        close: price,
+        volume: volume,
       };
 
       return completedBar;
     }
 
     // Same interval - update current bar
-    this.currentBar.high = Math.max(this.currentBar.high, tick.price);
-    this.currentBar.low = Math.min(this.currentBar.low, tick.price);
-    this.currentBar.close = tick.price;
-    this.currentBar.volume += tick.volume;
+    this.currentBar.high = Math.max(this.currentBar.high, price);
+    this.currentBar.low = Math.min(this.currentBar.low, price);
+    this.currentBar.close = price;
+    this.currentBar.volume += volume;
 
     return undefined;
+  }
+
+  /**
+   * Process new tick data.
+   * @param tick Tick with timestamp, price, and volume
+   * @returns Completed OHLCV bar or undefined if bar still in progress
+   */
+  onData(tick: OHLCVTick): OHLCVBar | undefined {
+    return this.update(tick.timestamp, tick.price, tick.volume);
   }
 
   /**
@@ -102,7 +111,7 @@ export class OHLCV {
     type: "OHLCV",
     desc: "Time-based OHLCV candle aggregator",
     init: "{intervalMs: number}",
-    onDataParam: "{timestamp, price, volume}",
+    update: "timestamp, price, volume",
     output: "{timestamp, open, high, low, close, volume} | undefined",
   };
 }

@@ -1,8 +1,12 @@
 import type { PeriodWith } from "../types/PeriodOptions.js";
 import type { BarWith } from "../types/BarData.js";
-import { CircularBuffer } from "../fn/Containers.js";
-import { wilders_factor, SmoothedAccum } from "../utils/math.js";
-import { EMA, SMA } from "../fn/Foundation.js";
+import {
+  CircularBuffer,
+  wilders_factor,
+  SmoothedAccum,
+  EMA as CoreEMA,
+  SMA as CoreSMA,
+} from "@junduck/trading-core";
 
 import { type OperatorDoc } from "../types/OpDoc.js";
 
@@ -11,19 +15,18 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  * Calculates (close - open) / (high - low) ratio.
  */
 export class BOP {
-  /**
-   * Process new bar data.
-   * @param bar OHLC bar data
-   * @returns Balance of Power value
-   */
+  update(open: number, high: number, low: number, close: number): number {
+    const range = high - low;
+    return range !== 0 ? (close - open) / range : 0;
+  }
+
   onData(bar: BarWith<"open" | "high" | "low" | "close">): number {
-    const range = bar.high - bar.low;
-    return range !== 0 ? (bar.close - bar.open) / range : 0;
+    return this.update(bar.open, bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "BOP",
-    onDataParam: "bar: {open, high, low, close}",
+    update: "open, high, low, close",
     output: "number",
   };
 }
@@ -50,23 +53,22 @@ export class MOM {
     this.buffer = new CircularBuffer(opts.period + 1);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns Price change from period ago
-   */
-  onData(bar: BarWith<"close">): number {
-    this.buffer.push(bar.close);
+  update(close: number): number {
+    this.buffer.push(close);
     if (!this.buffer.full()) {
       return 0;
     }
-    return bar.close - this.buffer.front()!;
+    return close - this.buffer.front()!;
+  }
+
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "MOM",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -94,25 +96,24 @@ export class ROC {
     this.buffer = new CircularBuffer(opts.period + 1);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns Percentage change from period ago
-   */
-  onData(bar: BarWith<"close">): number {
-    this.buffer.push(bar.close);
+  update(close: number): number {
+    this.buffer.push(close);
     if (!this.buffer.full()) {
       return 0;
     }
     const old = this.buffer.front()!;
-    return old !== 0 ? ((bar.close - old) / old) * 100 : 0;
+    return old !== 0 ? ((close - old) / old) * 100 : 0;
+  }
+
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ROC",
     desc: "Rate of Change",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -140,24 +141,23 @@ export class ROCR {
     this.buffer = new CircularBuffer(opts.period + 1);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns Price ratio from period ago
-   */
-  onData(bar: BarWith<"close">): number {
-    this.buffer.push(bar.close);
+  update(close: number): number {
+    this.buffer.push(close);
     if (!this.buffer.full()) {
       return 1;
     }
     const old = this.buffer.front()!;
-    return old !== 0 ? bar.close / old : 1;
+    return old !== 0 ? close / old : 1;
+  }
+
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ROCR",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -188,19 +188,14 @@ export class RSI {
     this.alpha = wilders_factor(opts.period);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns RSI value (0-100)
-   */
-  onData(bar: BarWith<"close">): number {
+  update(close: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return 50;
     }
 
-    const change = bar.close - this.prevClose;
-    this.prevClose = bar.close;
+    const change = close - this.prevClose;
+    this.prevClose = close;
 
     const gain = change > 0 ? change : 0;
     const loss = change < 0 ? -change : 0;
@@ -221,10 +216,14 @@ export class RSI {
     return 100 - 100 / (1 + rs);
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "RSI",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -255,19 +254,14 @@ export class CMO {
     this.buffer = new CircularBuffer(opts.period);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns CMO value (-100 to 100)
-   */
-  onData(bar: BarWith<"close">): number {
+  update(close: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return 0;
     }
 
-    const change = bar.close - this.prevClose;
-    this.prevClose = bar.close;
+    const change = close - this.prevClose;
+    this.prevClose = close;
 
     if (change > 0) {
       this.upSum += change;
@@ -293,10 +287,14 @@ export class CMO {
     return total !== 0 ? ((this.upSum - this.downSum) / total) * 100 : 0;
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "CMO",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -321,30 +319,29 @@ export class WAD {
   private wad: number = 0;
   private prevClose?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, close
-   * @returns Current WAD value
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
+  update(high: number, low: number, close: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return this.wad;
     }
 
-    if (bar.close > this.prevClose) {
-      this.wad += bar.close - Math.min(this.prevClose, bar.low);
-    } else if (bar.close < this.prevClose) {
-      this.wad += bar.close - Math.max(this.prevClose, bar.high);
+    if (close > this.prevClose) {
+      this.wad += close - Math.min(this.prevClose, low);
+    } else if (close < this.prevClose) {
+      this.wad += close - Math.max(this.prevClose, high);
     }
 
-    this.prevClose = bar.close;
+    this.prevClose = close;
     return this.wad;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "WAD",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -363,41 +360,45 @@ export function useWAD(): (bar: BarWith<"high" | "low" | "close">) => number {
  * Compares close relative to open with range.
  */
 export class RVI {
-  private numeratorSma: SMA;
-  private denominatorSma: SMA;
-  private signalSma: SMA;
+  private numeratorSma: CoreSMA;
+  private denominatorSma: CoreSMA;
+  private signalSma: CoreSMA;
 
   constructor(opts: PeriodWith<"period">) {
-    this.numeratorSma = new SMA(opts);
-    this.denominatorSma = new SMA(opts);
-    this.signalSma = new SMA({ period: 4 });
+    this.numeratorSma = new CoreSMA(opts);
+    this.denominatorSma = new CoreSMA(opts);
+    this.signalSma = new CoreSMA({ period: 4 });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with open, high, low, close
-   * @returns Object with rvi and signal values
-   */
+  update(
+    open: number,
+    high: number,
+    low: number,
+    close: number
+  ): { rvi: number; signal: number } {
+    const numerator = close - open;
+    const denominator = high - low;
+
+    const avgNum = this.numeratorSma.update(numerator);
+    const avgDenom = this.denominatorSma.update(denominator);
+
+    const rvi = avgDenom !== 0 ? avgNum / avgDenom : 0;
+    const signal = this.signalSma.update(rvi);
+
+    return { rvi, signal };
+  }
+
   onData(bar: BarWith<"open" | "high" | "low" | "close">): {
     rvi: number;
     signal: number;
   } {
-    const numerator = bar.close - bar.open;
-    const denominator = bar.high - bar.low;
-
-    const avgNum = this.numeratorSma.onData(numerator);
-    const avgDenom = this.denominatorSma.onData(denominator);
-
-    const rvi = avgDenom !== 0 ? avgNum / avgDenom : 0;
-    const signal = this.signalSma.onData(rvi);
-
-    return { rvi, signal };
+    return this.update(bar.open, bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "RVI",
     init: "{period: number}",
-    onDataParam: "bar: {open, high, low, close}",
+    update: "open, high, low, close",
     output: "{rvi, signal}",
   };
 }
@@ -422,11 +423,11 @@ export function useRVI(opts: PeriodWith<"period">): (
  * Double-smoothed momentum oscillator.
  */
 export class TSI {
-  private emsSlow1: EMA;
-  private emsFast1: EMA;
-  private emsSlow2: EMA;
-  private emsFast2: EMA;
-  private emaSignal: EMA;
+  private emsSlow1: CoreEMA;
+  private emsFast1: CoreEMA;
+  private emsSlow2: CoreEMA;
+  private emsFast2: CoreEMA;
+  private emaSignal: CoreEMA;
   private prevClose?: number;
 
   constructor(
@@ -436,50 +437,49 @@ export class TSI {
       period_signal: 13,
     }
   ) {
-    this.emsSlow1 = new EMA({ period: opts.period_slow });
-    this.emsFast1 = new EMA({ period: opts.period_fast });
-    this.emsSlow2 = new EMA({ period: opts.period_slow });
-    this.emsFast2 = new EMA({ period: opts.period_fast });
-    this.emaSignal = new EMA({ period: opts.period_signal });
+    this.emsSlow1 = new CoreEMA({ period: opts.period_slow });
+    this.emsFast1 = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow2 = new CoreEMA({ period: opts.period_slow });
+    this.emsFast2 = new CoreEMA({ period: opts.period_fast });
+    this.emaSignal = new CoreEMA({ period: opts.period_signal });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Object with tsi and signal values
-   */
-  onData(bar: BarWith<"close">): { tsi: number; signal: number } {
+  update(close: number): { tsi: number; signal: number } {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
-      this.emsSlow1.onData(0);
-      this.emsFast1.onData(0);
-      this.emsSlow2.onData(0);
-      this.emsFast2.onData(0);
+      this.prevClose = close;
+      this.emsSlow1.update(0);
+      this.emsFast1.update(0);
+      this.emsSlow2.update(0);
+      this.emsFast2.update(0);
       return { tsi: 0, signal: 0 };
     }
 
-    const momentum = bar.close - this.prevClose;
-    this.prevClose = bar.close;
+    const momentum = close - this.prevClose;
+    this.prevClose = close;
 
-    const smoothed1 = this.emsSlow1.onData(momentum);
-    const doubleSmoothNum = this.emsFast1.onData(smoothed1);
+    const smoothed1 = this.emsSlow1.update(momentum);
+    const doubleSmoothNum = this.emsFast1.update(smoothed1);
 
     const absMomentum = Math.abs(momentum);
-    const smoothed2 = this.emsSlow2.onData(absMomentum);
-    const doubleSmoothDenom = this.emsFast2.onData(smoothed2);
+    const smoothed2 = this.emsSlow2.update(absMomentum);
+    const doubleSmoothDenom = this.emsFast2.update(smoothed2);
 
     const tsi =
       doubleSmoothDenom !== 0 ? (doubleSmoothNum / doubleSmoothDenom) * 100 : 0;
-    const signal = this.emaSignal.onData(tsi);
+    const signal = this.emaSignal.update(tsi);
 
     return { tsi, signal };
+  }
+
+  onData(bar: BarWith<"close">): { tsi: number; signal: number } {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "TSI",
     desc: "Trend Strength Index", // Agent: mistakes for True Strength Index
     init: "{period_fast?: number, period_slow?: number, period_signal?: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "{tsi, signal}",
   };
 }
@@ -505,33 +505,36 @@ export function useTSI(
  * Compares highs and lows to EMA.
  */
 export class BBPOWER {
-  private ema: EMA;
+  private ema: CoreEMA;
 
   constructor(opts: PeriodWith<"period">) {
-    this.ema = new EMA(opts);
+    this.ema = new CoreEMA(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close
-   * @returns Object with bull_power and bear_power
-   */
+  update(
+    high: number,
+    low: number,
+    close: number
+  ): { bull_power: number; bear_power: number } {
+    const emaValue = this.ema.update(close);
+    return {
+      bull_power: high - emaValue,
+      bear_power: low - emaValue,
+    };
+  }
+
   onData(bar: BarWith<"high" | "low" | "close">): {
     bull_power: number;
     bear_power: number;
   } {
-    const emaValue = this.ema.onData(bar.close);
-    return {
-      bull_power: bar.high - emaValue,
-      bear_power: bar.low - emaValue,
-    };
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "BBPOWER",
     desc: "Elder's Bull/Bear Power", // Agent: mistakes for Bollinger Bands Power
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{bull_power, bear_power}",
   };
 }

@@ -1,10 +1,16 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../fn/Containers.js";
-import { ArgMax, ArgMin, EMA, MinMax, Sum } from "../fn/Foundation.js";
+import {
+  CircularBuffer,
+  MeanAbsDeviation,
+  RollingArgMax,
+  RollingArgMin,
+  EMA as CoreEMA,
+  RollingMinMax,
+  RollingSum,
+  wilders_factor,
+} from "@junduck/trading-core";
 import { ATR, PriceChannel } from "./Volatility.js";
-import { wilders_factor } from "../utils/math.js";
-import { MeanAD } from "../fn/StatsDeviation.js";
 import { type OperatorDoc } from "../types/OpDoc.js";
 
 /**
@@ -12,27 +18,19 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  * Measures time elapsed since highest high and lowest low.
  */
 export class AROON {
-  private highest: ArgMax;
-  private lowest: ArgMin;
+  private highest: RollingArgMax;
+  private lowest: RollingArgMin;
   private period: number;
 
   constructor(opts: PeriodWith<"period">) {
     this.period = opts.period;
-    this.highest = new ArgMax(opts);
-    this.lowest = new ArgMin(opts);
+    this.highest = new RollingArgMax(opts);
+    this.lowest = new RollingArgMin(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high and low
-   * @returns Object with up and down values (0-100 scale)
-   */
-  onData(bar: BarWith<"high" | "low">): {
-    up: number;
-    down: number;
-  } {
-    const highest = this.highest.onData(bar.high);
-    const lowest = this.lowest.onData(bar.low);
+  update(high: number, low: number): { up: number; down: number } {
+    const highest = this.highest.update(high);
+    const lowest = this.lowest.update(low);
 
     if (!this.highest.buffer.full()) {
       return { up: 0, down: 0 };
@@ -43,10 +41,14 @@ export class AROON {
     return { up, down };
   }
 
+  onData(bar: BarWith<"high" | "low">): { up: number; down: number } {
+    return this.update(bar.high, bar.low);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "AROON",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "{up, down}",
   };
 }
@@ -77,20 +79,19 @@ export class AROONOSC {
     this.aroon = new AROON(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high and low
-   * @returns Aroon oscillator value (-100 to +100)
-   */
-  onData(bar: BarWith<"high" | "low">): number {
-    const { up, down } = this.aroon.onData(bar);
+  update(high: number, low: number): number {
+    const { up, down } = this.aroon.update(high, low);
     return up - down;
+  }
+
+  onData(bar: BarWith<"high" | "low">): number {
+    return this.update(bar.high, bar.low);
   }
 
   static readonly doc: OperatorDoc = {
     type: "AROONOSC",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -112,33 +113,32 @@ export function useAROONOSC(
  * Calculates (TP - SMA(TP)) / (0.015 * mean_deviation).
  */
 export class CCI {
-  private mad: MeanAD;
+  private mad: MeanAbsDeviation;
 
   constructor(opts: PeriodWith<"period">) {
-    this.mad = new MeanAD(opts);
+    this.mad = new MeanAbsDeviation(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, and close
-   * @returns CCI value
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
-    const tp = (bar.high + bar.low + bar.close) / 3;
+  update(high: number, low: number, close: number): number {
+    const tp = (high + low + close) / 3;
 
-    const val = this.mad.onData(tp);
+    const { mean, mad } = this.mad.update(tp);
 
     if (!this.mad.buffer.full()) {
       return 0;
     }
 
-    return val.mad !== 0 ? (tp - val.mean) / (0.015 * val.mad) : 0;
+    return mad !== 0 ? (tp - mean) / (0.015 * mad) : 0;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "CCI",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -160,28 +160,23 @@ export function useCCI(
  * Calculates ratio of price range to sum of price changes.
  */
 export class VHF {
-  private minmax: MinMax;
-  private sum: Sum;
+  private minmax: RollingMinMax;
+  private sum: RollingSum;
   private preClose?: number;
 
   constructor(opts: PeriodWith<"period">) {
-    this.minmax = new MinMax(opts);
-    this.sum = new Sum(opts);
+    this.minmax = new RollingMinMax(opts);
+    this.sum = new RollingSum(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close price
-   * @returns VHF value (higher indicates stronger trend)
-   */
-  onData(bar: BarWith<"close">): number {
+  update(close: number): number {
     if (this.preClose === undefined) {
-      this.preClose = bar.close;
+      this.preClose = close;
       return 0;
     }
 
-    const minmax = this.minmax.onData(bar.close);
-    const sum = this.sum.onData(Math.abs(bar.close - this.preClose));
+    const minmax = this.minmax.update(close);
+    const sum = this.sum.update(Math.abs(close - this.preClose));
 
     if (!this.sum.buffer.full()) {
       return 0;
@@ -191,10 +186,14 @@ export class VHF {
     return sum !== 0 ? numerator / sum : 0;
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "VHF",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -216,32 +215,27 @@ export function useVHF(
  * Calculates smoothed +DM (upward) and -DM (downward) movements.
  */
 export class DM {
-  private emaPlus: EMA;
-  private emaMinus: EMA;
+  private emaPlus: CoreEMA;
+  private emaMinus: CoreEMA;
   private prevHigh?: number;
   private prevLow?: number;
 
   constructor(opts: PeriodWith<"period">) {
-    this.emaPlus = new EMA({ alpha: wilders_factor(opts.period) });
-    this.emaMinus = new EMA({ alpha: wilders_factor(opts.period) });
+    this.emaPlus = new CoreEMA({ alpha: wilders_factor(opts.period) });
+    this.emaMinus = new CoreEMA({ alpha: wilders_factor(opts.period) });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high and low
-   * @returns Object with plus (upward) and minus (downward) directional movements
-   */
-  onData(bar: BarWith<"high" | "low">): { plus: number; minus: number } {
+  update(high: number, low: number): { plus: number; minus: number } {
     if (this.prevHigh === undefined || this.prevLow === undefined) {
-      this.prevHigh = bar.high;
-      this.prevLow = bar.low;
-      const plus = this.emaPlus.onData(0);
-      const minus = this.emaMinus.onData(0);
+      this.prevHigh = high;
+      this.prevLow = low;
+      const plus = this.emaPlus.update(0);
+      const minus = this.emaMinus.update(0);
       return { plus, minus };
     }
 
-    const upMove = bar.high - this.prevHigh;
-    const downMove = this.prevLow - bar.low;
+    const upMove = high - this.prevHigh;
+    const downMove = this.prevLow - low;
 
     let plusDM = 0;
     let minusDM = 0;
@@ -253,19 +247,23 @@ export class DM {
       minusDM = downMove;
     }
 
-    this.prevHigh = bar.high;
-    this.prevLow = bar.low;
+    this.prevHigh = high;
+    this.prevLow = low;
 
-    const plus = this.emaPlus.onData(plusDM);
-    const minus = this.emaMinus.onData(minusDM);
+    const plus = this.emaPlus.update(plusDM);
+    const minus = this.emaMinus.update(minusDM);
 
     return { plus, minus };
+  }
+
+  onData(bar: BarWith<"high" | "low">): { plus: number; minus: number } {
+    return this.update(bar.high, bar.low);
   }
 
   static readonly doc: OperatorDoc = {
     type: "DM",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "{plus, minus}",
   };
 }
@@ -295,17 +293,13 @@ export class DI {
     this.atr = new ATR(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, and close
-   * @returns Object with plus (DI+) and minus (DI-) indicators (0-100 scale)
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): {
-    plus: number;
-    minus: number;
-  } {
-    const dmValue = this.dm.onData(bar);
-    const atrValue = this.atr.onData(bar);
+  update(
+    high: number,
+    low: number,
+    close: number
+  ): { plus: number; minus: number } {
+    const dmValue = this.dm.update(high, low);
+    const atrValue = this.atr.update(high, low, close);
 
     if (atrValue === 0) {
       return { plus: 0, minus: 0 };
@@ -317,10 +311,17 @@ export class DI {
     };
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    plus: number;
+    minus: number;
+  } {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "DI",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{plus, minus}",
   };
 }
@@ -351,13 +352,8 @@ export class DX {
     this.di = new DI(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, and close
-   * @returns DX value (0-100 scale)
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
-    const diValue = this.di.onData(bar);
+  update(high: number, low: number, close: number): number {
+    const diValue = this.di.update(high, low, close);
     const sum = diValue.plus + diValue.minus;
 
     if (sum === 0) {
@@ -368,10 +364,14 @@ export class DX {
     return (diff / sum) * 100;
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "DX",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -394,27 +394,26 @@ export function useDX(
  */
 export class ADX {
   private dx: DX;
-  private ema: EMA;
+  private ema: CoreEMA;
 
   constructor(opts: PeriodWith<"period">) {
     this.dx = new DX(opts);
-    this.ema = new EMA({ alpha: wilders_factor(opts.period) });
+    this.ema = new CoreEMA({ alpha: wilders_factor(opts.period) });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, and close
-   * @returns ADX value (0-100 scale)
-   */
+  update(high: number, low: number, close: number): number {
+    const dxValue = this.dx.update(high, low, close);
+    return this.ema.update(dxValue);
+  }
+
   onData(bar: BarWith<"high" | "low" | "close">): number {
-    const dxValue = this.dx.onData(bar);
-    return this.ema.onData(dxValue);
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ADX",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -444,13 +443,8 @@ export class ADXR {
     this.buffer = new CircularBuffer<number>(opts.period);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, and close
-   * @returns ADXR value (0-100 scale)
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
-    const adxValue = this.adx.onData(bar);
+  update(high: number, low: number, close: number): number {
+    const adxValue = this.adx.update(high, low, close);
     this.buffer.push(adxValue);
 
     if (!this.buffer.full()) {
@@ -461,10 +455,14 @@ export class ADXR {
     return (adxValue + oldAdx) / 2;
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "ADXR",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -493,8 +491,8 @@ export class SAR {
   private ep?: number;
   private prevHigh?: number;
   private prevLow?: number;
-  private prevPrevHigh?: number | undefined; // Added
-  private prevPrevLow?: number | undefined; // Added
+  private prevPrevHigh?: number | undefined;
+  private prevPrevLow?: number | undefined;
   private afIncrement: number;
 
   constructor(
@@ -508,17 +506,12 @@ export class SAR {
     this.maxAf = opts?.maximum ?? 0.2;
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high and low
-   * @returns Current SAR value (stop level)
-   */
-  onData(bar: BarWith<"high" | "low">): number {
+  update(high: number, low: number): number {
     if (this.sar === undefined) {
-      this.sar = bar.low;
-      this.ep = bar.high;
-      this.prevHigh = bar.high;
-      this.prevLow = bar.low;
+      this.sar = low;
+      this.ep = high;
+      this.prevHigh = high;
+      this.prevLow = low;
       return this.sar;
     }
 
@@ -527,20 +520,17 @@ export class SAR {
     if (this.isLong) {
       this.sar = prevSar + this.af * (this.ep! - prevSar);
 
-      if (bar.low < this.sar) {
+      if (low < this.sar) {
         this.isLong = false;
-        // this.sar = this.ep!;
-        // Don't penetrate current bar
-        this.sar = Math.max(this.ep!, bar.high);
-        this.ep = bar.low;
+        this.sar = Math.max(this.ep!, high);
+        this.ep = low;
         this.af = this.afIncrement;
       } else {
-        if (bar.high > this.ep!) {
-          this.ep = bar.high;
+        if (high > this.ep!) {
+          this.ep = high;
           this.af = Math.min(this.af + this.afIncrement, this.maxAf);
         }
 
-        // SAR must not be above prior two lows
         const minLow =
           this.prevPrevLow !== undefined
             ? Math.min(this.prevLow!, this.prevPrevLow)
@@ -551,20 +541,17 @@ export class SAR {
     } else {
       this.sar = prevSar + this.af * (this.ep! - prevSar);
 
-      if (bar.high > this.sar) {
+      if (high > this.sar) {
         this.isLong = true;
-        // this.sar = this.ep!;
-        // Don't penetrate current bar
-        this.sar = Math.min(this.ep!, bar.low);
-        this.ep = bar.high;
+        this.sar = Math.min(this.ep!, low);
+        this.ep = high;
         this.af = this.afIncrement;
       } else {
-        if (bar.low < this.ep!) {
-          this.ep = bar.low;
+        if (low < this.ep!) {
+          this.ep = low;
           this.af = Math.min(this.af + this.afIncrement, this.maxAf);
         }
 
-        // SAR must not be below prior two highs
         const maxHigh =
           this.prevPrevHigh !== undefined
             ? Math.max(this.prevHigh!, this.prevPrevHigh)
@@ -576,16 +563,20 @@ export class SAR {
 
     this.prevPrevHigh = this.prevHigh;
     this.prevPrevLow = this.prevLow;
-    this.prevHigh = bar.high;
-    this.prevLow = bar.low;
+    this.prevHigh = high;
+    this.prevLow = low;
 
     return this.sar;
+  }
+
+  onData(bar: BarWith<"high" | "low">): number {
+    return this.update(bar.high, bar.low);
   }
 
   static readonly doc: OperatorDoc = {
     type: "SAR",
     init: "{acceleration?, maximum?}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -611,34 +602,26 @@ export class VI {
   private prevLow?: number;
   private prevHigh?: number;
   private preClose?: number;
-  private vm_minus_sum: Sum;
-  private vm_plus_sum: Sum;
-  private tr_sum: Sum;
+  private vm_minus_sum: RollingSum;
+  private vm_plus_sum: RollingSum;
+  private tr_sum: RollingSum;
 
   constructor(opts: PeriodWith<"period">) {
-    this.vm_minus_sum = new Sum(opts);
-    this.vm_plus_sum = new Sum(opts);
-    this.tr_sum = new Sum(opts);
+    this.vm_minus_sum = new RollingSum(opts);
+    this.vm_plus_sum = new RollingSum(opts);
+    this.tr_sum = new RollingSum(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close
-   * @returns Object with vi_plus and vi_minus
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): {
-    vi_plus: number;
-    vi_minus: number;
-  } {
-    const { high, low, close } = bar;
+  update(
+    high: number,
+    low: number,
+    close: number
+  ): { vi_plus: number; vi_minus: number } {
     if (this.prevLow === undefined) {
       this.prevHigh = high;
       this.prevLow = low;
       this.preClose = close;
-      return {
-        vi_plus: 0,
-        vi_minus: 0,
-      };
+      return { vi_plus: 0, vi_minus: 0 };
     }
 
     const vm_plus = Math.abs(high - this.prevLow);
@@ -649,13 +632,13 @@ export class VI {
       Math.abs(low - this.preClose!)
     );
 
-    const tr_sum = this.tr_sum.onData(tr);
+    const tr_sum = this.tr_sum.update(tr);
     if (tr_sum === 0) {
       return { vi_plus: 0, vi_minus: 0 };
     }
 
-    const vm_plus_sum = this.vm_plus_sum.onData(vm_plus);
-    const vm_minus_sum = this.vm_minus_sum.onData(vm_minus);
+    const vm_plus_sum = this.vm_plus_sum.update(vm_plus);
+    const vm_minus_sum = this.vm_minus_sum.update(vm_minus);
 
     return {
       vi_plus: vm_plus_sum / tr_sum,
@@ -663,10 +646,17 @@ export class VI {
     };
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    vi_plus: number;
+    vi_minus: number;
+  } {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "VI",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{vi_plus, vi_minus}",
   };
 }
@@ -720,22 +710,21 @@ export class ICHIMOKU {
     this.chikouBuffer = new CircularBuffer(displacement);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close
-   * @returns Ichimoku components
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): {
+  update(
+    high: number,
+    low: number,
+    close: number
+  ): {
     tenkan: number;
     kijun: number;
     senkou_a: number;
     senkou_b: number;
     chikou: number;
   } {
-    const tenkanHL = this.tenkanChannel.onData(bar);
-    const kijunHL = this.kijunChannel.onData(bar);
-    const senkouHL = this.senkouChannel.onData(bar);
-    this.chikouBuffer.push(bar.close);
+    const tenkanHL = this.tenkanChannel.update(high, low);
+    const kijunHL = this.kijunChannel.update(high, low);
+    const senkouHL = this.senkouChannel.update(high, low);
+    this.chikouBuffer.push(close);
 
     const tenkan = (tenkanHL.upper + tenkanHL.lower) / 2;
     const kijun = (kijunHL.upper + kijunHL.lower) / 2;
@@ -743,15 +732,25 @@ export class ICHIMOKU {
     const senkou_a = (tenkan + kijun) / 2;
     const chikou = this.chikouBuffer.full()
       ? this.chikouBuffer.front()!
-      : bar.close;
+      : close;
 
     return { tenkan, kijun, senkou_a, senkou_b, chikou };
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    tenkan: number;
+    kijun: number;
+    senkou_a: number;
+    senkou_b: number;
+    chikou: number;
+  } {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ICHIMOKU",
     init: "{tenkan_period?, kijun_period?, senkou_b_period?, displacement?}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{tenkan, kijun, senkou_a, senkou_b, chikou}",
   };
 }

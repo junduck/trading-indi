@@ -1,7 +1,11 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../fn/Containers.js";
-import { EMA, Sum } from "../fn/Foundation.js";
+import {
+  Kahan
+  CircularBuffer,
+  EMA as CoreEMA,
+  RollingSum,
+} from "@junduck/trading-core";
 import { type OperatorDoc } from "../types/OpDoc.js";
 
 /**
@@ -9,27 +13,24 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  * Cumulative measure of money flow based on close location value.
  */
 export class AD {
-  private ad: number = 0;
+  private ad: Kahan = new Kahan();
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, close, volume
-   * @returns Current AD value
-   */
-  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+  update(high: number, low: number, close: number, volume: number): number {
     const clv =
-      bar.high !== bar.low
-        ? ((bar.close - bar.low - (bar.high - bar.close)) /
-            (bar.high - bar.low)) *
-          bar.volume
+      high !== low
+        ? ((close - low - (high - close)) / (high - low)) * volume
         : 0;
-    this.ad += clv;
-    return this.ad;
+    this.ad.accum(clv);
+    return this.ad.val;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "AD",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -51,28 +52,27 @@ export function useAD(): (
  */
 export class ADOSC {
   private ad = new AD();
-  private emsFast: EMA;
-  private emsSlow: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, close, volume
-   * @returns Current ADOSC value
-   */
+  update(high: number, low: number, close: number, volume: number): number {
+    const adVal = this.ad.update(high, low, close, volume);
+    return this.emsFast.update(adVal) - this.emsSlow.update(adVal);
+  }
+
   onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
-    const adVal = this.ad.onData(bar);
-    return this.emsFast.onData(adVal) - this.emsSlow.onData(adVal);
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ADOSC",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -94,25 +94,20 @@ export function useADOSC(
  * Combines price movement trends with volume to detect money flow.
  */
 export class KVO {
-  private fastEMA: EMA;
-  private slowEMA: EMA;
+  private fastEMA: CoreEMA;
+  private slowEMA: CoreEMA;
   private prevHLC?: number;
   private trend: number = 1;
   private cm: number = 0;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
-    this.fastEMA = new EMA({ period: opts.period_fast });
-    this.slowEMA = new EMA({ period: opts.period_slow });
+    this.fastEMA = new CoreEMA({ period: opts.period_fast });
+    this.slowEMA = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, close, volume
-   * @returns Current KVO value
-   */
-  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
-    const hlc = bar.high + bar.low + bar.close;
-    const dm = bar.high - bar.low;
+  update(high: number, low: number, close: number, volume: number): number {
+    const hlc = high + low + close;
+    const dm = high - low;
 
     if (this.prevHLC !== undefined) {
       if (hlc > this.prevHLC) {
@@ -133,20 +128,22 @@ export class KVO {
     this.prevHLC = hlc;
 
     const vf =
-      this.cm > 0
-        ? 100 * bar.volume * this.trend * Math.abs((2 * dm) / this.cm - 1)
-        : 0;
+      this.cm > 0 ? 100 * volume * this.trend * Math.abs((2 * dm) / this.cm - 1) : 0;
 
-    const fastVF = this.fastEMA.onData(vf);
-    const slowVF = this.slowEMA.onData(vf);
+    const fastVF = this.fastEMA.update(vf);
+    const slowVF = this.slowEMA.update(vf);
 
     return fastVF - slowVF;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "KVO",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -172,31 +169,30 @@ export class NVI {
   private prevVolume?: number;
   private prevClose?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close, volume
-   * @returns Current NVI value
-   */
-  onData(bar: BarWith<"close" | "volume">): number {
+  update(close: number, volume: number): number {
     if (this.prevVolume === undefined) {
-      this.prevVolume = bar.volume;
-      this.prevClose = bar.close;
+      this.prevVolume = volume;
+      this.prevClose = close;
       return this.nvi;
     }
 
-    if (bar.volume < this.prevVolume && this.prevClose !== 0) {
-      const roc = (bar.close - this.prevClose!) / this.prevClose!;
+    if (volume < this.prevVolume && this.prevClose !== 0) {
+      const roc = (close - this.prevClose!) / this.prevClose!;
       this.nvi += this.nvi * roc;
     }
 
-    this.prevVolume = bar.volume;
-    this.prevClose = bar.close;
+    this.prevVolume = volume;
+    this.prevClose = close;
     return this.nvi;
+  }
+
+  onData(bar: BarWith<"close" | "volume">): number {
+    return this.update(bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "NVI",
-    onDataParam: "bar: {close, volume}",
+    update: "close, volume",
     output: "number",
   };
 }
@@ -218,30 +214,29 @@ export class OBV {
   private obv: number = 0;
   private prevClose?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close, volume
-   * @returns Current OBV value
-   */
-  onData(bar: BarWith<"close" | "volume">): number {
+  update(close: number, volume: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return this.obv;
     }
 
-    if (bar.close > this.prevClose) {
-      this.obv += bar.volume;
-    } else if (bar.close < this.prevClose) {
-      this.obv -= bar.volume;
+    if (close > this.prevClose) {
+      this.obv += volume;
+    } else if (close < this.prevClose) {
+      this.obv -= volume;
     }
 
-    this.prevClose = bar.close;
+    this.prevClose = close;
     return this.obv;
+  }
+
+  onData(bar: BarWith<"close" | "volume">): number {
+    return this.update(bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "OBV",
-    onDataParam: "bar: {close, volume}",
+    update: "close, volume",
     output: "number",
   };
 }
@@ -264,31 +259,30 @@ export class PVI {
   private prevVolume?: number;
   private prevClose?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close, volume
-   * @returns Current PVI value
-   */
-  onData(bar: BarWith<"close" | "volume">): number {
+  update(close: number, volume: number): number {
     if (this.prevVolume === undefined) {
-      this.prevVolume = bar.volume;
-      this.prevClose = bar.close;
+      this.prevVolume = volume;
+      this.prevClose = close;
       return this.pvi;
     }
 
-    if (bar.volume > this.prevVolume && this.prevClose !== 0) {
-      const roc = (bar.close - this.prevClose!) / this.prevClose!;
+    if (volume > this.prevVolume && this.prevClose !== 0) {
+      const roc = (close - this.prevClose!) / this.prevClose!;
       this.pvi += this.pvi * roc;
     }
 
-    this.prevVolume = bar.volume;
-    this.prevClose = bar.close;
+    this.prevVolume = volume;
+    this.prevClose = close;
     return this.pvi;
+  }
+
+  onData(bar: BarWith<"close" | "volume">): number {
+    return this.update(bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "PVI",
-    onDataParam: "bar: {close, volume}",
+    update: "close, volume",
     output: "number",
   };
 }
@@ -316,14 +310,9 @@ export class MFI {
     this.buffer = new CircularBuffer(opts.period);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, close, volume
-   * @returns Current MFI value (0-100)
-   */
-  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
-    const typical = (bar.high + bar.low + bar.close) / 3;
-    let moneyFlow = typical * bar.volume;
+  update(high: number, low: number, close: number, volume: number): number {
+    const typical = (high + low + close) / 3;
+    let moneyFlow = typical * volume;
 
     if (this.prevTypical === undefined) {
       this.prevTypical = typical;
@@ -362,10 +351,14 @@ export class MFI {
     return 100 - 100 / (1 + mfr);
   }
 
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "MFI",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -389,13 +382,8 @@ export function useMFI(
 export class EMV {
   private prevMid?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, volume
-   * @returns Current EMV value
-   */
-  onData(bar: BarWith<"high" | "low" | "volume">): number {
-    const mid = (bar.high + bar.low) / 2;
+  update(high: number, low: number, volume: number): number {
+    const mid = (high + low) / 2;
     if (this.prevMid === undefined) {
       this.prevMid = mid;
       return 0;
@@ -404,13 +392,17 @@ export class EMV {
     const distance = mid - this.prevMid;
     this.prevMid = mid;
 
-    const boxRatio = bar.volume / 100000000 / (bar.high - bar.low);
+    const boxRatio = volume / 100000000 / (high - low);
     return boxRatio !== 0 ? distance / boxRatio : 0;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "volume">): number {
+    return this.update(bar.high, bar.low, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "EMV",
-    onDataParam: "bar: {high, low, volume}",
+    update: "high, low, volume",
     output: "number",
   };
 }
@@ -429,19 +421,18 @@ export function useEMV(): (bar: BarWith<"high" | "low" | "volume">) => number {
  * Measures price movement efficiency per volume unit.
  */
 export class MarketFI {
-  /**
-   * Process new bar data.
-   * @param bar Bar data with high, low, volume
-   * @returns Current MarketFI value
-   */
+  update(high: number, low: number, volume: number): number {
+    return volume !== 0 ? (high - low) / volume : 0;
+  }
+
   onData(bar: BarWith<"high" | "low" | "volume">): number {
-    return bar.volume !== 0 ? (bar.high - bar.low) / bar.volume : 0;
+    return this.update(bar.high, bar.low, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "MarketFI",
     desc: "Market Facilitation Index", // Agent: mistakes for Market Finance Index
-    onDataParam: "bar: {high, low, volume}",
+    update: "high, low, volume",
     output: "number",
   };
 }
@@ -462,31 +453,28 @@ export function useMarketFI(): (
  * Percentage difference between two volume EMAs.
  */
 export class VOSC {
-  private emsFast: EMA;
-  private emsSlow: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new volume data.
-   * @param bar Bar data with volume
-   * @returns Current VOSC percentage value
-   */
+  update(volume: number): number {
+    const emsFastVal = this.emsFast.update(volume);
+    const emsSlowVal = this.emsSlow.update(volume);
+    return emsSlowVal !== 0 ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100 : 0;
+  }
+
   onData(bar: BarWith<"volume">): number {
-    const emsFastVal = this.emsFast.onData(bar.volume);
-    const emsSlowVal = this.emsSlow.onData(bar.volume);
-    return emsSlowVal !== 0
-      ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100
-      : 0;
+    return this.update(bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "VOSC",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {volume}",
+    update: "volume",
     output: "number",
   };
 }
@@ -508,36 +496,33 @@ export function useVOSC(
  * Measures buying/selling pressure over a period.
  */
 export class CMF {
-  private mfvSum: Sum;
-  private volSum: Sum;
+  private mfvSum: RollingSum;
+  private volSum: RollingSum;
 
   constructor(opts: PeriodWith<"period">) {
-    this.mfvSum = new Sum(opts);
-    this.volSum = new Sum(opts);
+    this.mfvSum = new RollingSum(opts);
+    this.volSum = new RollingSum(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close, volume
-   * @returns CMF value (-1 to +1 range)
-   */
-  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+  update(high: number, low: number, close: number, volume: number): number {
     const clv =
-      bar.high !== bar.low
-        ? (bar.close - bar.low - (bar.high - bar.close)) / (bar.high - bar.low)
-        : 0;
-    const mfv = clv * bar.volume;
+      high !== low ? (close - low - (high - close)) / (high - low) : 0;
+    const mfv = clv * volume;
 
-    const mfvSum = this.mfvSum.onData(mfv);
-    const volSum = this.volSum.onData(bar.volume);
+    const mfvSum = this.mfvSum.update(mfv);
+    const volSum = this.volSum.update(volume);
 
     return volSum !== 0 ? mfvSum / volSum : 0;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "CMF",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -560,29 +545,28 @@ export function useCMF(
  */
 export class CHO {
   private ad: AD;
-  private emsFast: EMA;
-  private emsSlow: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
     this.ad = new AD();
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close, volume
-   * @returns Chaikin Oscillator value
-   */
+  update(high: number, low: number, close: number, volume: number): number {
+    const adValue = this.ad.update(high, low, close, volume);
+    return this.emsFast.update(adValue) - this.emsSlow.update(adValue);
+  }
+
   onData(bar: BarWith<"high" | "low" | "close" | "volume">): number {
-    const adValue = this.ad.onData(bar);
-    return this.emsFast.onData(adValue) - this.emsSlow.onData(adValue);
+    return this.update(bar.high, bar.low, bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "CHO",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {high, low, close, volume}",
+    update: "high, low, close, volume",
     output: "number",
   };
 }
@@ -604,44 +588,43 @@ export function useCHO(
  * Percentage difference between short and long volume EMAs.
  */
 export class PVO {
-  private emsFast: EMA;
-  private emsSlow: EMA;
-  private emaSignal: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
+  private emaSignal: CoreEMA;
 
   constructor(
     opts: PeriodWith<"period_fast" | "period_slow"> & {
       period_signal?: number;
     }
   ) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
-    this.emaSignal = new EMA({ period: opts.period_signal ?? 9 });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
+    this.emaSignal = new CoreEMA({ period: opts.period_signal ?? 9 });
   }
 
-  /**
-   * Process new volume data.
-   * @param bar Bar with volume
-   * @returns Object with pvo, signal, and histogram
-   */
-  onData(bar: BarWith<"volume">): {
-    pvo: number;
-    signal: number;
-    histogram: number;
-  } {
-    const emsFastVal = this.emsFast.onData(bar.volume);
-    const emsSlowVal = this.emsSlow.onData(bar.volume);
+  update(volume: number): { pvo: number; signal: number; histogram: number } {
+    const emsFastVal = this.emsFast.update(volume);
+    const emsSlowVal = this.emsSlow.update(volume);
     const pvo =
       emsSlowVal !== 0 ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100 : 0;
-    const signal = this.emaSignal.onData(pvo);
+    const signal = this.emaSignal.update(pvo);
     const histogram = pvo - signal;
 
     return { pvo, signal, histogram };
   }
 
+  onData(bar: BarWith<"volume">): {
+    pvo: number;
+    signal: number;
+    histogram: number;
+  } {
+    return this.update(bar.volume);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "PVO",
     init: "{period_fast, period_slow, period_signal?}",
-    onDataParam: "bar: {volume}",
+    update: "volume",
     output: "{pvo, signal, histogram}",
   };
 }
@@ -667,33 +650,32 @@ export function usePVO(
  * Combines price change with volume.
  */
 export class FI {
-  private ema: EMA;
+  private ema: CoreEMA;
   private prevClose?: number;
 
   constructor(opts: PeriodWith<"period">) {
-    this.ema = new EMA({ period: opts.period });
+    this.ema = new CoreEMA({ period: opts.period });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with close and volume
-   * @returns Force Index value
-   */
-  onData(bar: BarWith<"close" | "volume">): number {
+  update(close: number, volume: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
-      return this.ema.onData(0);
+      this.prevClose = close;
+      return this.ema.update(0);
     }
 
-    const force = (bar.close - this.prevClose) * bar.volume;
-    this.prevClose = bar.close;
-    return this.ema.onData(force);
+    const force = (close - this.prevClose) * volume;
+    this.prevClose = close;
+    return this.ema.update(force);
+  }
+
+  onData(bar: BarWith<"close" | "volume">): number {
+    return this.update(bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "FI",
     init: "{period: number}",
-    onDataParam: "bar: {close, volume}",
+    update: "close, volume",
     output: "number",
   };
 }
@@ -721,26 +703,25 @@ export class VROC {
     this.buffer = new CircularBuffer(opts.period + 1);
   }
 
-  /**
-   * Process new volume data.
-   * @param bar Bar with volume
-   * @returns Volume rate of change as percentage
-   */
-  onData(bar: BarWith<"volume">): number {
-    this.buffer.push(bar.volume);
+  update(volume: number): number {
+    this.buffer.push(volume);
 
     if (!this.buffer.full()) {
       return 0;
     }
 
     const oldVolume = this.buffer.front()!;
-    return oldVolume !== 0 ? ((bar.volume - oldVolume) / oldVolume) * 100 : 0;
+    return oldVolume !== 0 ? ((volume - oldVolume) / oldVolume) * 100 : 0;
+  }
+
+  onData(bar: BarWith<"volume">): number {
+    return this.update(bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "VROC",
     init: "{period: number}",
-    onDataParam: "bar: {volume}",
+    update: "volume",
     output: "number",
   };
 }
@@ -762,30 +743,29 @@ export function useVROC(
  * Similar to OBV but uses percentage price change.
  */
 export class PVT {
-  private pvt: number = 0;
+  private pvt: Kahan = new Kahan();
   private prevClose?: number;
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with close and volume
-   * @returns Cumulative PVT value
-   */
-  onData(bar: BarWith<"close" | "volume">): number {
+  update(close: number, volume: number): number {
     if (this.prevClose === undefined || this.prevClose === 0) {
-      this.prevClose = bar.close;
-      return this.pvt;
+      this.prevClose = close;
+      return this.pvt.val;
     }
 
-    const priceChange = (bar.close - this.prevClose) / this.prevClose;
-    this.pvt += priceChange * bar.volume;
-    this.prevClose = bar.close;
+    const priceChange = (close - this.prevClose) / this.prevClose;
+    this.pvt.accum(priceChange * volume);
+    this.prevClose = close;
 
-    return this.pvt;
+    return this.pvt.val;
+  }
+
+  onData(bar: BarWith<"close" | "volume">): number {
+    return this.update(bar.close, bar.volume);
   }
 
   static readonly doc: OperatorDoc = {
     type: "PVT",
-    onDataParam: "bar: {close, volume}",
+    update: "close, volume",
     output: "number",
   };
 }

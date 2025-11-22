@@ -1,9 +1,16 @@
-import { EMA, Max, Min, SMA, Sum } from "../fn/Foundation.js";
-import { Variance, Stddev } from "../fn/Stats.js";
+import {
+  EMA as CoreEMA,
+  RollingMax,
+  RollingMin,
+  SMA as CoreSMA,
+  RollingSum,
+  RollingVar,
+  RollingStddev,
+  CircularBuffer,
+  wilders_factor,
+} from "@junduck/trading-core";
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { CircularBuffer } from "../fn/Containers.js";
-import { wilders_factor } from "../utils/math.js";
 import { type OperatorDoc } from "../types/OpDoc.js";
 
 /**
@@ -12,35 +19,34 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  */
 export class Volatility {
   private prevClose?: number;
-  private variance: Variance;
+  private variance: RollingVar;
   private annualizedDays: number;
 
   constructor(opts: PeriodWith<"period"> & { annualizedDays?: number }) {
-    this.variance = new Variance({ period: opts.period, ddof: 1 });
+    this.variance = new RollingVar({ period: opts.period, ddof: 1 });
     this.annualizedDays = opts.annualizedDays ?? 250;
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with close price
-   * @returns Annualized volatility as percentage
-   */
-  onData(bar: BarWith<"close">): number {
+  update(close: number): number {
     if (this.prevClose === undefined || this.prevClose === 0) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return 0;
     }
 
-    const logReturn = Math.log(bar.close / this.prevClose);
-    this.prevClose = bar.close;
-    const { variance: variance } = this.variance.onData(logReturn);
+    const logReturn = Math.log(close / this.prevClose);
+    this.prevClose = close;
+    const { variance: variance } = this.variance.update(logReturn);
     return Math.sqrt(variance * this.annualizedDays) * 100;
+  }
+
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "Volatility",
     init: "{period, annualizedDays?}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -61,21 +67,16 @@ export function useVolatility(
  * Chaikins Volatility - measures rate of change in trading range.
  */
 export class CVI {
-  private ema: EMA;
+  private ema: CoreEMA;
   private buffer: CircularBuffer<number>;
 
   constructor(opts: PeriodWith<"period">) {
-    this.ema = new EMA({ period: 10 });
+    this.ema = new CoreEMA({ period: 10 });
     this.buffer = new CircularBuffer(opts.period + 1);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with high and low
-   * @returns Current CVI value
-   */
-  onData(bar: BarWith<"high" | "low">): number {
-    const emaVal = this.ema.onData(bar.high - bar.low);
+  update(high: number, low: number): number {
+    const emaVal = this.ema.update(high - low);
     this.buffer.push(emaVal);
 
     if (!this.buffer.full()) {
@@ -86,10 +87,14 @@ export class CVI {
     return old !== 0 ? ((emaVal - old) / old) * 100 : 0;
   }
 
+  onData(bar: BarWith<"high" | "low">): number {
+    return this.update(bar.high, bar.low);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "CVI",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -110,31 +115,26 @@ export function useCVI(
  * Mass Index - identifies trend reversals by analyzing range expansion.
  */
 export class MASS {
-  private ema1: EMA;
-  private ema2: EMA;
-  private sum: Sum;
+  private ema1: CoreEMA;
+  private ema2: CoreEMA;
+  private sum: RollingSum;
 
   constructor(
     opts: PeriodWith<"period"> = {
       period: 9,
     }
   ) {
-    this.ema1 = new EMA(opts);
-    this.ema2 = new EMA(opts);
-    this.sum = new Sum(opts);
+    this.ema1 = new CoreEMA(opts);
+    this.ema2 = new CoreEMA(opts);
+    this.sum = new RollingSum(opts);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with high and low
-   * @returns Current Mass Index value
-   */
-  onData(bar: BarWith<"high" | "low">): number {
-    const range = bar.high - bar.low;
-    const ema1Val = this.ema1.onData(range);
-    const ema2Val = this.ema2.onData(ema1Val);
+  update(high: number, low: number): number {
+    const range = high - low;
+    const ema1Val = this.ema1.update(range);
+    const ema2Val = this.ema2.update(ema1Val);
     const ratio = ema2Val !== 0 ? ema1Val / ema2Val : 0;
-    const sum = this.sum.onData(ratio);
+    const sum = this.sum.update(ratio);
 
     if (!this.sum.buffer.full()) {
       return 0;
@@ -143,10 +143,14 @@ export class MASS {
     return sum;
   }
 
+  onData(bar: BarWith<"high" | "low">): number {
+    return this.update(bar.high, bar.low);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "MASS",
     init: "{period?: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -169,28 +173,27 @@ export function useMASS(
 export class TR {
   private prevClose?: number;
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with high, low, and close
-   * @returns Current True Range value
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
+  update(high: number, low: number, close: number): number {
     const tr =
       this.prevClose === undefined
-        ? bar.high - bar.low
+        ? high - low
         : Math.max(
-            bar.high - bar.low,
-            Math.abs(bar.high - this.prevClose),
-            Math.abs(bar.low - this.prevClose)
+            high - low,
+            Math.abs(high - this.prevClose),
+            Math.abs(low - this.prevClose)
           );
 
-    this.prevClose = bar.close;
+    this.prevClose = close;
     return tr;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "TR",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -209,27 +212,26 @@ export function useTR(): (bar: BarWith<"high" | "low" | "close">) => number {
  */
 export class ATR {
   private tr: TR;
-  private ema: EMA;
+  private ema: CoreEMA;
 
   constructor(opts: PeriodWith<"period">) {
     this.tr = new TR();
-    this.ema = new EMA({ alpha: wilders_factor(opts.period) });
+    this.ema = new CoreEMA({ alpha: wilders_factor(opts.period) });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with high, low, and close
-   * @returns Current ATR value
-   */
+  update(high: number, low: number, close: number): number {
+    const trValue = this.tr.update(high, low, close);
+    return this.ema.update(trValue);
+  }
+
   onData(bar: BarWith<"high" | "low" | "close">): number {
-    const trValue = this.tr.onData(bar);
-    return this.ema.onData(trValue);
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "ATR",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -256,20 +258,19 @@ export class NATR {
     this.atr = new ATR(opts);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar data with high, low, and close
-   * @returns Current NATR value as percentage
-   */
+  update(high: number, low: number, close: number): number {
+    const atrVal = this.atr.update(high, low, close);
+    return close !== 0 ? (atrVal / close) * 100 : 0;
+  }
+
   onData(bar: BarWith<"high" | "low" | "close">): number {
-    const atrVal = this.atr.onData(bar);
-    return bar.close !== 0 ? (atrVal / bar.close) * 100 : 0;
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "NATR",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }
@@ -291,34 +292,28 @@ export function useNATR(
  * Similar to Donchian Channels but without middle line.
  */
 export class PriceChannel {
-  private highMax: Max;
-  private lowMin: Min;
+  private highMax: RollingMax;
+  private lowMin: RollingMin;
 
   constructor(opts: PeriodWith<"period">) {
-    this.highMax = new Max(opts);
-    this.lowMin = new Min(opts);
+    this.highMax = new RollingMax(opts);
+    this.lowMin = new RollingMin(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high and low
-   * @returns Object with upper and lower channel values
-   */
-  onData(bar: BarWith<"high" | "low">): {
-    upper: number;
-    lower: number;
-  } {
-    const { high, low } = bar;
-    const upper = this.highMax.onData(high);
-    const lower = this.lowMin.onData(low);
-
+  update(high: number, low: number): { upper: number; lower: number } {
+    const upper = this.highMax.update(high);
+    const lower = this.lowMin.update(low);
     return { upper, lower };
+  }
+
+  onData(bar: BarWith<"high" | "low">): { upper: number; lower: number } {
+    return this.update(bar.high, bar.low);
   }
 
   static readonly doc: OperatorDoc = {
     type: "PriceChannel",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "{upper, lower}",
   };
 }
@@ -343,25 +338,16 @@ export function usePriceChannel(opts: PeriodWith<"period">): (
  * Uses standard deviation to measure price volatility.
  */
 export class BBANDS {
-  private std: Stddev;
+  private std: RollingStddev;
   private multiplier: number;
 
   constructor(opts: PeriodWith<"period"> & { Nstddev?: number }) {
-    this.std = new Stddev({ period: opts.period, ddof: 1 });
+    this.std = new RollingStddev({ period: opts.period, ddof: 1 });
     this.multiplier = opts.Nstddev ?? 2;
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Object with upper, middle, and lower bands
-   */
-  onData(bar: BarWith<"close">): {
-    upper: number;
-    middle: number;
-    lower: number;
-  } {
-    const { mean, stddev } = this.std.onData(bar.close);
+  update(close: number): { upper: number; middle: number; lower: number } {
+    const { mean, stddev } = this.std.update(close);
     const offset = this.multiplier * stddev;
 
     return {
@@ -371,10 +357,18 @@ export class BBANDS {
     };
   }
 
+  onData(bar: BarWith<"close">): {
+    upper: number;
+    middle: number;
+    lower: number;
+  } {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "BBANDS",
     init: "{period, Nstddev?}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "{upper, middle, lower}",
   };
 }
@@ -400,31 +394,26 @@ export function useBBANDS(opts: PeriodWith<"period"> & { stddev?: number }): (
  * Measures volatility relative to ATR instead of standard deviation.
  */
 export class KC {
-  private sma: SMA;
+  private sma: CoreSMA;
   private tr: TR;
-  private sma_tr: SMA;
+  private sma_tr: CoreSMA;
   private multiplier: number;
 
   constructor(opts: PeriodWith<"period"> & { multiplier?: number }) {
-    this.sma = new SMA(opts);
+    this.sma = new CoreSMA(opts);
     this.tr = new TR();
-    this.sma_tr = new SMA(opts);
+    this.sma_tr = new CoreSMA(opts);
     this.multiplier = opts.multiplier ?? 2;
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high, low, close
-   * @returns Object with upper, middle, and lower channels
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): {
-    upper: number;
-    middle: number;
-    lower: number;
-  } {
-    const middle = this.sma.onData(bar.close);
-    const tr = this.tr.onData(bar);
-    const mtr = this.sma_tr.onData(tr);
+  update(
+    high: number,
+    low: number,
+    close: number
+  ): { upper: number; middle: number; lower: number } {
+    const middle = this.sma.update(close);
+    const tr = this.tr.update(high, low, close);
+    const mtr = this.sma_tr.update(tr);
     const offset = this.multiplier * mtr;
 
     return {
@@ -434,10 +423,18 @@ export class KC {
     };
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): {
+    upper: number;
+    middle: number;
+    lower: number;
+  } {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "KC",
     init: "{period, multiplier?}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{upper, middle, lower}",
   };
 }
@@ -463,27 +460,20 @@ export function useKC(opts: PeriodWith<"period"> & { multiplier?: number }): (
  * Classic breakout indicator using price extremes.
  */
 export class DC {
-  private min: Min;
-  private max: Max;
+  private min: RollingMin;
+  private max: RollingMax;
 
   constructor(opts: PeriodWith<"period">) {
-    this.min = new Min(opts);
-    this.max = new Max(opts);
+    this.min = new RollingMin(opts);
+    this.max = new RollingMax(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high and low
-   * @returns Object with upper, middle, and lower channels
-   */
-  onData(bar: BarWith<"high" | "low">): {
-    upper: number;
-    middle: number;
-    lower: number;
-  } {
-    const { high, low } = bar;
-    const min = this.min.onData(low);
-    const max = this.max.onData(high);
+  update(
+    high: number,
+    low: number
+  ): { upper: number; middle: number; lower: number } {
+    const min = this.min.update(low);
+    const max = this.max.update(high);
 
     return {
       upper: max,
@@ -492,10 +482,18 @@ export class DC {
     };
   }
 
+  onData(bar: BarWith<"high" | "low">): {
+    upper: number;
+    middle: number;
+    lower: number;
+  } {
+    return this.update(bar.high, bar.low);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "DC",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "{upper, middle, lower}",
   };
 }

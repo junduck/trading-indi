@@ -1,6 +1,12 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
-import { EMA, MinMax, SMA, Sum } from "../fn/Foundation.js";
+import {
+  EMA as CoreEMA,
+  RollingMinMax,
+  SMA as CoreSMA,
+  RollingSum,
+  clamp,
+} from "@junduck/trading-core";
 import { type OperatorDoc } from "../types/OpDoc.js";
 
 /**
@@ -8,22 +14,21 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  * Measures momentum using median price with 5/34 period SMAs.
  */
 export class AO {
-  private smaShort = new SMA({ period: 5 });
-  private smaLong = new SMA({ period: 34 });
+  private smaShort = new CoreSMA({ period: 5 });
+  private smaLong = new CoreSMA({ period: 34 });
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high and low prices
-   * @returns Current AO value
-   */
+  update(high: number, low: number): number {
+    const midpoint = (high + low) / 2;
+    return this.smaShort.update(midpoint) - this.smaLong.update(midpoint);
+  }
+
   onData(bar: BarWith<"high" | "low">): number {
-    const midpoint = (bar.high + bar.low) / 2;
-    return this.smaShort.onData(midpoint) - this.smaLong.onData(midpoint);
+    return this.update(bar.high, bar.low);
   }
 
   static readonly doc: OperatorDoc = {
     type: "AO",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -42,27 +47,26 @@ export function useAO(): (bar: BarWith<"high" | "low">) => number {
  * Calculates difference between short and long period EMAs.
  */
 export class APO {
-  private emsFast: EMA;
-  private emsSlow: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Current APO value
-   */
+  update(close: number): number {
+    return this.emsFast.update(close) - this.emsSlow.update(close);
+  }
+
   onData(bar: BarWith<"close">): number {
-    return this.emsFast.onData(bar.close) - this.emsSlow.onData(bar.close);
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "APO",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -84,35 +88,34 @@ export function useAPO(
  * Removes trend to identify cycles using displaced SMA.
  */
 export class DPO {
-  private sma: SMA;
+  private sma: CoreSMA;
   private lookback: number;
 
   constructor(opts: PeriodWith<"period">) {
-    this.sma = new SMA({ period: opts.period });
+    this.sma = new CoreSMA({ period: opts.period });
     this.lookback = Math.floor(opts.period / 2) + 1;
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Current DPO value
-   */
-  onData(bar: BarWith<"close">): number {
-    const smaVal = this.sma.onData(bar.close);
+  update(close: number): number {
+    const smaVal = this.sma.update(close);
 
     if (!this.sma.buffer.full()) {
       return 0;
     }
 
     const pastPrice =
-      this.sma.buffer.at(this.sma.buffer.size() - this.lookback) ?? bar.close;
+      this.sma.buffer.at(this.sma.buffer.size() - this.lookback) ?? close;
     return pastPrice - smaVal;
+  }
+
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "DPO",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -134,22 +137,17 @@ export function useDPO(
  * Transforms prices to Gaussian distribution for identifying turning points.
  */
 export class Fisher {
-  private minmax: MinMax;
+  private minmax: RollingMinMax;
   private val: number = 0;
   private fisher: number = 0;
 
   constructor(opts: PeriodWith<"period">) {
-    this.minmax = new MinMax({ period: opts.period });
+    this.minmax = new RollingMinMax(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with high and low prices
-   * @returns Current Fisher Transform value
-   */
-  onData(bar: BarWith<"high" | "low">): number {
-    const hl = (bar.high + bar.low) / 2;
-    const { min, max } = this.minmax.onData(hl);
+  update(high: number, low: number): number {
+    const hl = (high + low) / 2;
+    const { min, max } = this.minmax.update(hl);
 
     const range = max - min;
     if (range === 0) {
@@ -159,17 +157,21 @@ export class Fisher {
     const normalized = 2 * ((hl - min) / range - 0.5);
     this.val = 0.333 * normalized + 0.667 * this.val;
 
-    const clamped = Math.max(-0.999, Math.min(0.999, this.val));
+    const clamped = clamp(this.val, -0.999, 0.999);
     const rawFisher = 0.5 * Math.log((1 + clamped) / (1 - clamped));
     this.fisher = 0.5 * rawFisher + 0.5 * this.fisher;
 
     return this.fisher;
   }
 
+  onData(bar: BarWith<"high" | "low">): number {
+    return this.update(bar.high, bar.low);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "Fisher",
     init: "{period: number}",
-    onDataParam: "bar: {high, low}",
+    update: "high, low",
     output: "number",
   };
 }
@@ -191,39 +193,37 @@ export function useFisher(
  * Trend-following momentum indicator using EMAs.
  */
 export class MACD {
-  private emsFast: EMA;
-  private emsSlow: EMA;
-  private emaSignal: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
+  private emaSignal: CoreEMA;
 
   constructor(
     opts: PeriodWith<"period_fast" | "period_slow" | "period_signal">
   ) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
-    this.emaSignal = new EMA({ period: opts.period_signal });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
+    this.emaSignal = new CoreEMA({ period: opts.period_signal });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Object with macd, signal, and histogram values
-   */
+  update(close: number): { macd: number; signal: number; histogram: number } {
+    const macd = this.emsFast.update(close) - this.emsSlow.update(close);
+    const signal = this.emaSignal.update(macd);
+    const histogram = macd - signal;
+    return { macd, signal, histogram };
+  }
+
   onData(bar: BarWith<"close">): {
     macd: number;
     signal: number;
     histogram: number;
   } {
-    const macd =
-      this.emsFast.onData(bar.close) - this.emsSlow.onData(bar.close);
-    const signal = this.emaSignal.onData(macd);
-    const histogram = macd - signal;
-    return { macd, signal, histogram };
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "MACD",
     init: "{period_fast, period_slow, period_signal}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "{macd, signal, histogram}",
   };
 }
@@ -249,31 +249,30 @@ export function useMACD(
  * Calculates percentage difference between short and long period EMAs.
  */
 export class PPO {
-  private emsFast: EMA;
-  private emsSlow: EMA;
+  private emsFast: CoreEMA;
+  private emsSlow: CoreEMA;
 
   constructor(opts: PeriodWith<"period_fast" | "period_slow">) {
-    this.emsFast = new EMA({ period: opts.period_fast });
-    this.emsSlow = new EMA({ period: opts.period_slow });
+    this.emsFast = new CoreEMA({ period: opts.period_fast });
+    this.emsSlow = new CoreEMA({ period: opts.period_slow });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Current PPO value as percentage
-   */
-  onData(bar: BarWith<"close">): number {
-    const emsFastVal = this.emsFast.onData(bar.close);
-    const emsSlowVal = this.emsSlow.onData(bar.close);
+  update(close: number): number {
+    const emsFastVal = this.emsFast.update(close);
+    const emsSlowVal = this.emsSlow.update(close);
     return emsSlowVal !== 0
       ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100
       : 0;
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "PPO",
     init: "{period_fast, period_slow}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -295,26 +294,25 @@ export function usePPO(
  * Measures average difference between close and open prices.
  */
 export class QSTICK {
-  private sma: SMA;
+  private sma: CoreSMA;
 
   constructor(opts: PeriodWith<"period">) {
-    this.sma = new SMA({ period: opts.period });
+    this.sma = new CoreSMA({ period: opts.period });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar with open and close prices
-   * @returns Current QSTICK value
-   */
+  update(open: number, close: number): number {
+    const diff = close - open;
+    return this.sma.update(diff);
+  }
+
   onData(bar: BarWith<"open" | "close">): number {
-    const diff = bar.close - bar.open;
-    return this.sma.onData(diff);
+    return this.update(bar.open, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "QSTICK",
     init: "{period: number}",
-    onDataParam: "bar: {open, close}",
+    update: "open, close",
     output: "number",
   };
 }
@@ -336,26 +334,21 @@ export function useQSTICK(
  * Rate of change of triple exponential moving average.
  */
 export class TRIX {
-  private ema1: EMA;
-  private ema2: EMA;
-  private ema3: EMA;
+  private ema1: CoreEMA;
+  private ema2: CoreEMA;
+  private ema3: CoreEMA;
   private prevEma3?: number;
 
   constructor(opts: PeriodWith<"period">) {
-    this.ema1 = new EMA({ period: opts.period });
-    this.ema2 = new EMA({ period: opts.period });
-    this.ema3 = new EMA({ period: opts.period });
+    this.ema1 = new CoreEMA({ period: opts.period });
+    this.ema2 = new CoreEMA({ period: opts.period });
+    this.ema3 = new CoreEMA({ period: opts.period });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Current TRIX value as percentage
-   */
-  onData(bar: BarWith<"close">): number {
-    const ema1Val = this.ema1.onData(bar.close);
-    const ema2Val = this.ema2.onData(ema1Val);
-    const ema3Val = this.ema3.onData(ema2Val);
+  update(close: number): number {
+    const ema1Val = this.ema1.update(close);
+    const ema2Val = this.ema2.update(ema1Val);
+    const ema3Val = this.ema3.update(ema2Val);
 
     if (this.prevEma3 === undefined || this.prevEma3 === 0) {
       this.prevEma3 = ema3Val;
@@ -367,10 +360,14 @@ export class TRIX {
     return trix;
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "TRIX",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -393,46 +390,41 @@ export function useTRIX(
  */
 export class ULTOSC {
   private prevClose?: number;
-  private sumBpFast: Sum;
-  private sumBpMed: Sum;
-  private sumBpSlow: Sum;
-  private sumTrFast: Sum;
-  private sumTrMed: Sum;
-  private sumTrSlow: Sum;
+  private sumBpFast: RollingSum;
+  private sumBpMed: RollingSum;
+  private sumBpSlow: RollingSum;
+  private sumTrFast: RollingSum;
+  private sumTrMed: RollingSum;
+  private sumTrSlow: RollingSum;
 
   constructor(opts: PeriodWith<"period_fast" | "period_med" | "period_slow">) {
-    this.sumBpFast = new Sum({ period: opts.period_fast });
-    this.sumBpMed = new Sum({ period: opts.period_med });
-    this.sumBpSlow = new Sum({ period: opts.period_slow });
-    this.sumTrFast = new Sum({ period: opts.period_fast });
-    this.sumTrMed = new Sum({ period: opts.period_med });
-    this.sumTrSlow = new Sum({ period: opts.period_slow });
+    this.sumBpFast = new RollingSum({ period: opts.period_fast });
+    this.sumBpMed = new RollingSum({ period: opts.period_med });
+    this.sumBpSlow = new RollingSum({ period: opts.period_slow });
+    this.sumTrFast = new RollingSum({ period: opts.period_fast });
+    this.sumTrMed = new RollingSum({ period: opts.period_med });
+    this.sumTrSlow = new RollingSum({ period: opts.period_slow });
   }
 
-  /**
-   * Process new bar data.
-   * @param bar OHLC bar with high, low, close
-   * @returns Ultimate Oscillator value (0-100 range)
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
+  update(high: number, low: number, close: number): number {
     if (this.prevClose === undefined) {
-      this.prevClose = bar.close;
+      this.prevClose = close;
       return 50;
     }
 
-    const tl = Math.min(bar.low, this.prevClose);
-    const th = Math.max(bar.high, this.prevClose);
-    const bp = bar.close - tl;
+    const tl = Math.min(low, this.prevClose);
+    const th = Math.max(high, this.prevClose);
+    const bp = close - tl;
     const tr = th - tl;
 
-    const bpFast = this.sumBpFast.onData(bp);
-    const bpMed = this.sumBpMed.onData(bp);
-    const bpSlow = this.sumBpSlow.onData(bp);
-    const trFast = this.sumTrFast.onData(tr);
-    const trMed = this.sumTrMed.onData(tr);
-    const trSlow = this.sumTrSlow.onData(tr);
+    const bpFast = this.sumBpFast.update(bp);
+    const bpMed = this.sumBpMed.update(bp);
+    const bpSlow = this.sumBpSlow.update(bp);
+    const trFast = this.sumTrFast.update(tr);
+    const trMed = this.sumTrMed.update(tr);
+    const trSlow = this.sumTrSlow.update(tr);
 
-    this.prevClose = bar.close;
+    this.prevClose = close;
 
     const avg1 = trFast !== 0 ? bpFast / trFast : 0;
     const avg2 = trMed !== 0 ? bpMed / trMed : 0;
@@ -441,10 +433,14 @@ export class ULTOSC {
     return (100 * (4 * avg1 + 2 * avg2 + avg3)) / 7;
   }
 
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "ULTOSC",
     init: "{period_fast, period_med, period_slow}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }

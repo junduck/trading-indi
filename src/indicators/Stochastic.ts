@@ -1,6 +1,11 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodOptions, PeriodWith } from "../types/PeriodOptions.js";
-import { Max, Min, MinMax, SMA } from "../fn/Foundation.js";
+import {
+  RollingMax,
+  RollingMin,
+  RollingMinMax,
+  SMA as CoreSMA,
+} from "@junduck/trading-core";
 import { RSI } from "./Momentum.js";
 import { type OperatorDoc } from "../types/OpDoc.js";
 
@@ -10,10 +15,10 @@ import { type OperatorDoc } from "../types/OpDoc.js";
  * Returns smoothed %K and %D lines.
  */
 export class STOCH {
-  private highest: Max;
-  private lowest: Min;
-  private smaK: SMA;
-  private smaD: SMA;
+  private highest: RollingMax;
+  private lowest: RollingMin;
+  private smaK: CoreSMA;
+  private smaD: CoreSMA;
 
   constructor(
     opts: PeriodOptions & {
@@ -30,39 +35,35 @@ export class STOCH {
     const kSlowing = opts.k_slowing ?? 3;
     const dPeriod = opts.d_period ?? 3;
 
-    this.highest = new Max({ period: kPeriod });
-    this.lowest = new Min({ period: kPeriod });
-    this.smaK = new SMA({ period: kSlowing });
-    this.smaD = new SMA({ period: dPeriod });
+    this.highest = new RollingMax({ period: kPeriod });
+    this.lowest = new RollingMin({ period: kPeriod });
+    this.smaK = new CoreSMA({ period: kSlowing });
+    this.smaD = new CoreSMA({ period: dPeriod });
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with high, low, close prices
-   * @returns Object with %K and %D values
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): {
-    k: number;
-    d: number;
-  } {
-    const highest = this.highest.onData(bar.high);
-    const lowest = this.lowest.onData(bar.low);
+  update(high: number, low: number, close: number): { k: number; d: number } {
+    const highest = this.highest.update(high);
+    const lowest = this.lowest.update(low);
 
     if (!this.highest.buffer.full()) {
       return { k: 0, d: 0 };
     }
 
     const range = highest - lowest;
-    const rawK = range !== 0 ? ((bar.close - lowest) / range) * 100 : 50;
-    const k = this.smaK.onData(rawK);
-    const d = this.smaD.onData(k);
+    const rawK = range !== 0 ? ((close - lowest) / range) * 100 : 50;
+    const k = this.smaK.update(rawK);
+    const d = this.smaD.update(k);
     return { k, d };
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): { k: number; d: number } {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "STOCH",
     init: "{k_period?, k_slowing?, d_period?}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "{k, d}",
   };
 }
@@ -92,21 +93,16 @@ export function useSTOCH(
  */
 export class STOCHRSI {
   private rsi: RSI;
-  private minmax: MinMax;
+  private minmax: RollingMinMax;
 
   constructor(opts: PeriodWith<"period">) {
     this.rsi = new RSI(opts);
-    this.minmax = new MinMax(opts);
+    this.minmax = new RollingMinMax(opts);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with close price
-   * @returns Current Stochastic RSI value
-   */
-  onData(bar: BarWith<"close">): number {
-    const rsi = this.rsi.onData(bar);
-    const { min, max } = this.minmax.onData(rsi);
+  update(close: number): number {
+    const rsi = this.rsi.update(close);
+    const { min, max } = this.minmax.update(rsi);
 
     if (!this.minmax.buffer.full()) {
       return 0;
@@ -116,10 +112,14 @@ export class STOCHRSI {
     return range !== 0 ? ((rsi - min) / range) * 100 : 0;
   }
 
+  onData(bar: BarWith<"close">): number {
+    return this.update(bar.close);
+  }
+
   static readonly doc: OperatorDoc = {
     type: "STOCHRSI",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -141,36 +141,35 @@ export function useSTOCHRSI(
  * Measures overbought/oversold levels over specified period.
  */
 export class WILLR {
-  private highest: Max;
-  private lowest: Min;
+  private highest: RollingMax;
+  private lowest: RollingMin;
 
   constructor(opts: PeriodWith<"period">) {
-    this.highest = new Max(opts);
-    this.lowest = new Min(opts);
+    this.highest = new RollingMax(opts);
+    this.lowest = new RollingMin(opts);
   }
 
-  /**
-   * Process new data point.
-   * @param bar Bar with high, low, close prices
-   * @returns Current Williams %R value
-   */
-  onData(bar: BarWith<"high" | "low" | "close">): number {
-    const highest = this.highest.onData(bar.high);
-    const lowest = this.lowest.onData(bar.low);
+  update(high: number, low: number, close: number): number {
+    const highest = this.highest.update(high);
+    const lowest = this.lowest.update(low);
 
     if (!this.highest.buffer.full()) {
       return 0;
     }
 
     const range = highest - lowest;
-    return range !== 0 ? ((highest - bar.close) / range) * -100 : 0;
+    return range !== 0 ? ((highest - close) / range) * -100 : 0;
+  }
+
+  onData(bar: BarWith<"high" | "low" | "close">): number {
+    return this.update(bar.high, bar.low, bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "WILLR",
     desc: "Williams %R",
     init: "{period: number}",
-    onDataParam: "bar: {high, low, close}",
+    update: "high, low, close",
     output: "number",
   };
 }

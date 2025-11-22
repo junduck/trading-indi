@@ -1,34 +1,37 @@
-import type { PeriodOptions, PeriodWith } from "../types/PeriodOptions.js";
 import type { BarWith } from "../types/BarData.js";
-import * as fn from "../fn/Foundation.js";
+import {
+  SMA as CoreSMA,
+  EMA as CoreEMA,
+  EWMA as CoreEWMA,
+  CircularBuffer,
+} from "@junduck/trading-core";
 import { type OperatorDoc } from "../types/OpDoc.js";
-
-// TODO: For agent use we should only register fn/Foundations equivalent
 
 /**
  * Simple Moving Average - stateful indicator.
  * Calculates arithmetic mean of close prices over period.
  */
 export class SMA {
-  private readonly core: fn.SMA;
+  private readonly core: CoreSMA;
+  readonly buffer: CircularBuffer<number>;
 
-  constructor(opts: PeriodWith<"period">) {
-    this.core = new fn.SMA(opts);
+  constructor(opts: { period: number }) {
+    this.core = new CoreSMA(opts);
+    this.buffer = this.core.buffer;
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close price
-   * @returns Current SMA value
-   */
+  update(close: number): number {
+    return this.core.update(close);
+  }
+
   onData(bar: BarWith<"close">): number {
-    return this.core.onData(bar.close);
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "SMA",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -38,9 +41,9 @@ export class SMA {
  * @param opts Period configuration
  * @returns Function that processes bar data and returns SMA
  */
-export function useSMA(
-  opts: PeriodWith<"period">
-): (bar: BarWith<"close">) => number {
+export function useSMA(opts: {
+  period: number;
+}): (bar: BarWith<"close">) => number {
   const instance = new SMA(opts);
   return (bar) => instance.onData(bar);
 }
@@ -50,25 +53,24 @@ export function useSMA(
  * Applies exponential smoothing with alpha = 2/(period+1) on close prices.
  */
 export class EMA {
-  private readonly core: fn.EMA;
+  private readonly core: CoreEMA;
 
-  constructor(opts: PeriodOptions & { alpha?: number }) {
-    this.core = new fn.EMA(opts);
+  constructor(opts: { period: number } | { alpha: number }) {
+    this.core = new CoreEMA(opts);
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close price
-   * @returns Current EMA value
-   */
+  update(close: number): number {
+    return this.core.update(close);
+  }
+
   onData(bar: BarWith<"close">): number {
-    return this.core.onData(bar.close);
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "EMA",
     init: "{period?: number, alpha?: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -79,7 +81,7 @@ export class EMA {
  * @returns Function that processes bar data and returns EMA
  */
 export function useEMA(
-  opts: PeriodOptions & { alpha?: number }
+  opts: { period: number } | { alpha: number }
 ): (bar: BarWith<"close">) => number {
   const instance = new EMA(opts);
   return (bar) => instance.onData(bar);
@@ -90,25 +92,26 @@ export function useEMA(
  * Maintains sliding window with exponentially decaying weights on close prices.
  */
 export class EWMA {
-  private readonly core: fn.EWMA;
+  private readonly core: CoreEWMA;
+  readonly buffer: CircularBuffer<number>;
 
-  constructor(opts: PeriodWith<"period">) {
-    this.core = new fn.EWMA(opts);
+  constructor(opts: { period: number }) {
+    this.core = new CoreEWMA(opts);
+    this.buffer = this.core.buffer;
   }
 
-  /**
-   * Process new bar data.
-   * @param bar Bar data with close price
-   * @returns Current EWMA value
-   */
+  update(close: number): number {
+    return this.core.update(close);
+  }
+
   onData(bar: BarWith<"close">): number {
-    return this.core.onData(bar.close);
+    return this.update(bar.close);
   }
 
   static readonly doc: OperatorDoc = {
     type: "EWMA",
     init: "{period: number}",
-    onDataParam: "bar: {close}",
+    update: "close",
     output: "number",
   };
 }
@@ -118,9 +121,9 @@ export class EWMA {
  * @param opts Period configuration
  * @returns Function that processes bar data and returns EWMA
  */
-export function useEWMA(
-  opts: PeriodWith<"period">
-): (bar: BarWith<"close">) => number {
+export function useEWMA(opts: {
+  period: number;
+}): (bar: BarWith<"close">) => number {
   const instance = new EWMA(opts);
   return (bar) => instance.onData(bar);
 }

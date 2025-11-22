@@ -10,7 +10,7 @@ export const OpSchemaZod = z.object({
   name: z.string().min(1, "Node name must be non-empty"),
   type: z.string().min(1, "Node type must be non-empty"),
   init: z.unknown().optional(),
-  onDataSource: z.union([z.array(z.string()), z.string()]).optional(),
+  updateSource: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 /**
@@ -48,9 +48,9 @@ export interface GraphSchemaValidationResult {
 }
 
 /**
- * Normalize onDataSource to string array. Handles undefined, empty string, and Const nodes.
+ * Normalize updateSource to string array. Handles undefined, empty string, and Const nodes.
  */
-export function normalizeOnDataSource(source?: string[] | string): string[] {
+export function normalizeUpdateSource(source?: string[] | string): string[] {
   if (!source || source === "") return [];
   return Array.isArray(source) ? source : [source];
 }
@@ -68,7 +68,7 @@ function buildSuccessorMap(schema: GraphSchema): Map<string, string[]> {
   }
 
   for (const node of schema.nodes) {
-    const sources = normalizeOnDataSource(node.onDataSource);
+    const sources = normalizeUpdateSource(node.updateSource);
     if (sources.length === 0) {
       // Nodes with no inputs (e.g., Const) depend on root
       const rootSuccs = succ.get(schema.root)!;
@@ -163,7 +163,7 @@ export function formatValidationError(error: GraphError): string {
  */
 export function graphComplexity(desc: GraphSchema): number {
   const edgeCount = desc.nodes.reduce(
-    (sum, node) => sum + normalizeOnDataSource(node.onDataSource).length,
+    (sum, node) => sum + normalizeUpdateSource(node.updateSource).length,
     0
   );
   return desc.nodes.length + edgeCount;
@@ -246,11 +246,11 @@ export function graphDiff(
       });
     }
 
-    const beforeInputs = normalizeOnDataSource(beforeNode.onDataSource)
+    const beforeInputs = normalizeUpdateSource(beforeNode.updateSource)
       .slice()
       .sort()
       .join(",");
-    const afterInputs = normalizeOnDataSource(afterNode.onDataSource)
+    const afterInputs = normalizeUpdateSource(afterNode.updateSource)
       .slice()
       .sort()
       .join(",");
@@ -258,8 +258,8 @@ export function graphDiff(
       diffs.push({
         kind: "node_input_changed",
         node: name,
-        before: normalizeOnDataSource(beforeNode.onDataSource),
-        after: normalizeOnDataSource(afterNode.onDataSource),
+        before: normalizeUpdateSource(beforeNode.updateSource),
+        after: normalizeUpdateSource(afterNode.updateSource),
       });
     }
   }

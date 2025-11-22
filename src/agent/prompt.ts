@@ -37,7 +37,11 @@ export function generateGraphSchemaPrompt(
   rootDataType: string,
   userPrompt: string
 ): string {
-  const operatorDocs = JSON.stringify(registry.getAllContexts(), null, 2);
+  const operatorDocs = JSON.stringify(
+    Object.fromEntries(registry.getAllContexts()),
+    null,
+    2
+  );
 
   // rootDataType: describes what root data event is:
   // E.g. {open, high, low, close, volume, timestamp}
@@ -61,7 +65,7 @@ ${rootDataType}
 
 Generate a JSON object with this structure:
 
-\`\`\`typescript
+\`\`\`json
 {
   "root": string,        // Input node name (e.g., "tick", "price")
   "nodes": [
@@ -69,7 +73,7 @@ Generate a JSON object with this structure:
       "name": string,         // Unique node identifier
       "type": string,         // Operator type from available operators
       "init": object,         // Constructor parameters (optional)
-      "onDataSource": string[] // Input paths (e.g., ["tick"], ["fast", "slow"], ["tick.close"])
+      "updateSource": string[] // Input paths (e.g., ["tick"], ["fast", "slow"], ["tick.close"])
     }
   ]
 }
@@ -80,7 +84,7 @@ Generate a JSON object with this structure:
 1. **Root node**: External data entry point, typically "tick" or "price"
 2. **Input paths**: Reference nodes by name or path (e.g., "ema", "tick.close" for access nested fields)
 3. **No cycles**: DAG structure required
-4. **Match parameters**: Each node's onDataSource must match its operator's onDataParam arity
+4. **Match parameters**: Each node's updateSource must match its operator's update arity
 
 ## Examples
 
@@ -94,7 +98,7 @@ root data event: {price: number, volume: number}
       "name": "ema",
       "type": "EMA",
       "init": {"period": 20},
-      "onDataSource": ["tick.price"]
+      "updateSource": ["tick.price"]
     }
   ]
 }
@@ -110,18 +114,18 @@ root data event: number
       "name": "fast",
       "type": "EMA",
       "init": {"period": 12},
-      "onDataSource": ["price"]
+      "updateSource": ["price"]
     },
     {
       "name": "slow",
       "type": "EMA",
       "init": {"period": 26},
-      "onDataSource": ["price"]
+      "updateSource": ["price"]
     },
     {
       "name": "macd",
       "type": "Sub",
-      "onDataSource": ["fast", "slow"]
+      "updateSource": ["fast", "slow"]
     }
   ]
 }
@@ -182,7 +186,9 @@ export function parseGraphSchemaResponse(
   } catch (error) {
     return {
       action: AgentFeedbackAction.FIX_JSON,
-      parseError: `JSON parse error: ${error instanceof Error ? error.message : String(error)}`,
+      parseError: `JSON parse error: ${
+        error instanceof Error ? error.message : String(error)
+      }`,
     };
   }
 

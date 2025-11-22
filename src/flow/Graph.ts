@@ -1,7 +1,7 @@
 import type { OpRegistry } from "./Registry.js";
 import type { GraphSchema } from "./Schema.js";
 import {
-  normalizeOnDataSource,
+  normalizeUpdateSource,
   validateGraphSchema,
   formatValidationError,
 } from "./Schema.js";
@@ -121,7 +121,7 @@ export class Graph {
     for (const nodeDesc of schema.nodes) {
       const ctor = registry.get(nodeDesc.type)!;
       const instance = new ctor(nodeDesc.init ?? {});
-      const sources = normalizeOnDataSource(nodeDesc.onDataSource);
+      const sources = normalizeUpdateSource(nodeDesc.updateSource);
       graph.add(nodeDesc.name, instance).depends(...sources);
     }
 
@@ -210,24 +210,6 @@ export class Graph {
     };
   }
 
-  // Experiment:
-  /* Logic completeness: ANY
-// Initialize topological sort
-for (const node of nodes) {
-  if (node.fireWhen === "any") {
-    inDegree.set(node.name, 1);
-  } else {
-    inDegree.set(node.name, node.input.length);
-  }
-}
-
-No extra book keeping required:
-fireWhen: "any", deps: [A, B, C], initial inDegree = 1
-A fires: 1 - 1 = 0  → queue ✓
-B fires: 0 - 1 = -1 → skip (not 0)
-C fires: -1 - 1 = -2 → skip (not 0)
-   */
-
   /** Execute the graph with new input data. */
   async update(data: any): Promise<void> {
     let state: Record<string, any> = { [this.rootNode]: data };
@@ -238,8 +220,10 @@ C fires: -1 - 1 = -2 → skip (not 0)
       inDegree.set(name, preds.length);
     }
 
-    let ready = new Array<string>(this.nodes.size);
-    let readyCount = 0;
+    // Pre-allocate exec queue
+    const queue = new Array<string>(this.nodes.size);
+    let readPtr = 0;
+    let writePtr = 0;
 
     // Pre-allocate emissions array for listener promises
     const emissions = new Array<Promise<void>>(this.updateListenerCount);
@@ -252,50 +236,46 @@ C fires: -1 - 1 = -2 → skip (not 0)
         const newDegree = inDegree.get(succ)! - 1;
         inDegree.set(succ, newDegree);
         if (newDegree === 0) {
-          ready[readyCount++] = succ;
+          queue[writePtr++] = succ;
         }
       }
     }
 
     // Execute nodes in topological order (synchronous, race-free)
-    while (readyCount > 0) {
-      const batchSize = readyCount;
-      readyCount = 0;
+    while (readPtr < writePtr) {
+      const nodeName = queue[readPtr++]!;
+      const node = this.nodes.get(nodeName)!;
+      const result = node.predSatisfied(state);
 
-      for (let i = 0; i < batchSize; i++) {
-        const nodeName = ready[i]!;
-        const node = this.nodes.get(nodeName);
+      if (result === undefined) {
+        continue;
+      }
 
-        if (!node) continue;
-
-        const result = node.predSatisfied(state);
-
-        if (result === undefined) continue;
-
-        // Collect listener promises for later serialization
-        if (this.updateListenerCount) {
-          const listeners = this.updateListener.get(nodeName);
-          if (listeners) {
-            for (const listener of listeners) {
-              const promise = listener(nodeName, result);
-              if (promise instanceof Promise) {
-                emissions[emissionCount++] = promise;
-              }
+      // Collect listener promises for later serialization
+      if (this.updateListenerCount) {
+        const listeners = this.updateListener.get(nodeName);
+        if (listeners) {
+          for (const listener of listeners) {
+            const promise = listener(nodeName, result);
+            if (promise instanceof Promise) {
+              emissions[emissionCount++] = promise;
             }
           }
         }
+      }
 
-        state[nodeName] = result;
+      state[nodeName] = result;
 
-        // Enqueue successors
-        const nodeSuccessors = this.successors.get(nodeName);
-        if (nodeSuccessors) {
-          for (const succ of nodeSuccessors) {
-            const newDegree = inDegree.get(succ)! - 1;
-            inDegree.set(succ, newDegree);
-            if (newDegree === 0) {
-              ready[readyCount++] = succ;
-            }
+      // Enqueue successors
+      const nodeSuccessors = this.successors.get(nodeName);
+      if (nodeSuccessors) {
+        for (const succ of nodeSuccessors) {
+          const oldDegree = inDegree.get(succ)!;
+          const newDegree = oldDegree - 1;
+          inDegree.set(succ, newDegree);
+
+          if (newDegree === 0) {
+            queue[writePtr++] = succ;
           }
         }
       }

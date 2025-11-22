@@ -5,73 +5,73 @@ import { type OperatorDoc } from "../types/OpDoc.js";
 // ============================================================================
 
 export class LT {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs < rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "LT",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class GT {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs > rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "GT",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class LTE {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs <= rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "LTE",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class GTE {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs >= rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "GTE",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class EQ {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs === rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "EQ",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class NEQ {
-  onData(lhs: number, rhs: number): boolean {
+  update(lhs: number, rhs: number): boolean {
     return lhs !== rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "NEQ",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -81,27 +81,27 @@ export class NEQ {
 // ============================================================================
 
 export class Between {
-  onData(x: number, lo: number, hi: number): boolean {
+  update(x: number, lo: number, hi: number): boolean {
     return x >= lo && x <= hi;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Between",
     desc: "lo <= x <= hi",
-    onDataParam: "x, lo, hi",
+    update: "x, lo, hi",
     output: "boolean",
   };
 }
 
 export class Outside {
-  onData(x: number, lo: number, hi: number): boolean {
+  update(x: number, lo: number, hi: number): boolean {
     return x < lo || x > hi;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Outside",
     desc: "x < lo || x > hi",
-    onDataParam: "x, lo, hi",
+    update: "x, lo, hi",
     output: "boolean",
   };
 }
@@ -111,49 +111,49 @@ export class Outside {
 // ============================================================================
 
 export class And {
-  onData(lhs: boolean, rhs: boolean): boolean {
+  update(lhs: boolean, rhs: boolean): boolean {
     return lhs && rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "And",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class Or {
-  onData(lhs: boolean, rhs: boolean): boolean {
+  update(lhs: boolean, rhs: boolean): boolean {
     return lhs || rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Or",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
 
 export class Not {
-  onData(x: boolean): boolean {
+  update(x: boolean): boolean {
     return !x;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Not",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
 
 export class Xor {
-  onData(lhs: boolean, rhs: boolean): boolean {
+  update(lhs: boolean, rhs: boolean): boolean {
     return lhs !== rhs;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Xor",
-    onDataParam: "lhs, rhs",
+    update: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -163,40 +163,40 @@ export class Xor {
 // ============================================================================
 
 export class AllOf {
-  onData(...inputs: boolean[]): boolean {
+  update(...inputs: boolean[]): boolean {
     for (const x of inputs) if (!x) return false;
     return true;
   }
 
   static readonly doc: OperatorDoc = {
     type: "AllOf",
-    onDataParam: "...inputs: boolean[]",
+    update: "...inputs: boolean[]",
     output: "boolean",
   };
 }
 
 export class AnyOf {
-  onData(...inputs: boolean[]): boolean {
+  update(...inputs: boolean[]): boolean {
     for (const x of inputs) if (x) return true;
     return false;
   }
 
   static readonly doc: OperatorDoc = {
     type: "AnyOf",
-    onDataParam: "...inputs: boolean[]",
+    update: "...inputs: boolean[]",
     output: "boolean",
   };
 }
 
 export class NoneOf {
-  onData(...inputs: boolean[]): boolean {
+  update(...inputs: boolean[]): boolean {
     for (const x of inputs) if (x) return false;
     return true;
   }
 
   static readonly doc: OperatorDoc = {
     type: "NoneOf",
-    onDataParam: "...inputs: boolean[]",
+    update: "...inputs: boolean[]",
     output: "boolean",
   };
 }
@@ -206,61 +206,61 @@ export class NoneOf {
 // ============================================================================
 
 export class IsNaN {
-  onData(x: number): boolean {
+  update(x: number): boolean {
     return Number.isNaN(x);
   }
 
   static readonly doc: OperatorDoc = {
     type: "IsNaN",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
 
 export class IsFinite {
-  onData(x: number): boolean {
+  update(x: number): boolean {
     return Number.isFinite(x);
   }
 
   static readonly doc: OperatorDoc = {
     type: "IsFinite",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
 
 export class IsPositive {
-  onData(x: number): boolean {
+  update(x: number): boolean {
     return x > 0;
   }
 
   static readonly doc: OperatorDoc = {
     type: "IsPositive",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
 
 export class IsNegative {
-  onData(x: number): boolean {
+  update(x: number): boolean {
     return x < 0;
   }
 
   static readonly doc: OperatorDoc = {
     type: "IsNegative",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
 
 export class IsZero {
-  onData(x: number): boolean {
+  update(x: number): boolean {
     return x === 0;
   }
 
   static readonly doc: OperatorDoc = {
     type: "IsZero",
-    onDataParam: "x",
+    update: "x",
     output: "boolean",
   };
 }
@@ -270,38 +270,38 @@ export class IsZero {
 // ============================================================================
 
 export class IfThenElse {
-  onData<T>(cond: boolean, thenVal: T, elseVal: T): T {
+  update<T>(cond: boolean, thenVal: T, elseVal: T): T {
     return cond ? thenVal : elseVal;
   }
 
   static readonly doc: OperatorDoc = {
     type: "IfThenElse",
-    onDataParam: "cond, thenVal, elseVal",
+    update: "cond, thenVal, elseVal",
     output: "thenVal | elseVal",
   };
 }
 
 export class Gate {
-  onData<T>(cond: boolean, val: T): T | undefined {
+  update<T>(cond: boolean, val: T): T | undefined {
     return cond ? val : undefined;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Gate",
-    onDataParam: "cond, val",
+    update: "cond, val",
     output: "val | undefined",
   };
 }
 
 export class Coalesce {
-  onData<T>(...inputs: (T | null)[]): T | undefined {
+  update<T>(...inputs: (T | null)[]): T | undefined {
     for (const x of inputs) if (x != null) return x;
     return undefined;
   }
 
   static readonly doc: OperatorDoc = {
     type: "Coalesce",
-    onDataParam: "...inputs",
+    update: "...inputs",
     output: "first non-null",
   };
 }

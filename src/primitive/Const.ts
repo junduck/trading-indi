@@ -11,7 +11,7 @@ export class Const {
     this.val = opts.value;
   }
 
-  onData(): number {
+  update(): number {
     return this.val;
   }
 
@@ -19,7 +19,7 @@ export class Const {
     type: "Const",
     desc: "Constant value source (no input required)",
     init: "{value: number}",
-    onDataParam: "",
+    update: "",
     output: "number",
   };
 }

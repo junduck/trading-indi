@@ -3,10 +3,10 @@
  */
 export interface OperatorDoc {
   type: string; // Registry key
-  desc?: string; // What it computes, undefined if trivial operators
+  desc?: string; // What it computes, undefined if trivial operators, or type name self-explanatory
   init?: string; // Constructor parameters, undefined if default construct
-  onDataParam: string; // onData's parameters
+  update: string; // update's parameters
   output: string; // What it produces
 }
 
-// TODO: reduce detailed desc, improve non-English agent context
+// Agent instruction: avoid desc field if operator is trivial, or the type name is self-explanatory, this improves multi-lingual agent CoT

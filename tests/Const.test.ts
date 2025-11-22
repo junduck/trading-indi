@@ -14,8 +14,8 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].const).toBe(42);
@@ -34,7 +34,7 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(100);
+    await g.update(100);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].const1).toBe(10);
@@ -44,7 +44,7 @@ describe("Const", () => {
   it("should work with operators that combine const values", async () => {
     const outputs: any[] = [];
     const sumNode = {
-      onData: (a: number, b: number) => a + b,
+      update: (a: number, b: number) => a + b,
     };
 
     const g = new Graph("tick");
@@ -59,8 +59,8 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].sum).toBe(30);
@@ -73,14 +73,14 @@ describe("Const", () => {
 
     g.add("const", new Const({ value: 5 }))
       .depends()
-      .add("mul", { onData: (tick: number, c: number) => tick * c })
+      .add("mul", { update: (tick: number, c: number) => tick * c })
       .depends("tick", "const")
       .output((output) => {
         outputs.push(output);
       });
 
-    await g.onData(10);
-    await g.onData(20);
+    await g.update(10);
+    await g.update(20);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].const).toBe(5);
@@ -111,7 +111,7 @@ describe("Const", () => {
       outputs.push(output);
     });
 
-    await g.onData(42);
+    await g.update(42);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].const).toBe(100);
@@ -157,8 +157,8 @@ describe("Const", () => {
       outputs.push(output);
     });
 
-    await g.onData(5);
-    await g.onData(10);
+    await g.update(5);
+    await g.update(10);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].multiplier).toBe(2);
@@ -176,7 +176,7 @@ describe("Const", () => {
       .depends()
       .add("const2", new Const({ value: 20 }))
       .depends()
-      .add("sum", { onData: (a: number, b: number) => a + b })
+      .add("sum", { update: (a: number, b: number) => a + b })
       .depends("const1", "const2");
 
     const result = g.validate();
@@ -194,7 +194,7 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(1);
+    await g.update(1);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].pi).toBeCloseTo(3.14159);
@@ -210,7 +210,7 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(1);
+    await g.update(1);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].negative).toBe(-100);
@@ -226,7 +226,7 @@ describe("Const", () => {
         outputs.push(output);
       });
 
-    await g.onData(1);
+    await g.update(1);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].zero).toBe(0);
@@ -253,7 +253,7 @@ describe("Const", () => {
       outputs.push(output);
     });
 
-    await g.onData(42);
+    await g.update(42);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].const).toBe(100);
@@ -281,7 +281,7 @@ describe("Const", () => {
       outputs.push(output);
     });
 
-    await g.onData(42);
+    await g.update(42);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].const).toBe(100);

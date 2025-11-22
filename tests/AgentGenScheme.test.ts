@@ -1,9 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import { Graph, OpRegistry, type GraphSchema, validateGraphSchema } from "../src/flow/index.js";
-import { EMA } from "../src/fn/Foundation.js";
-import { Const, Sub, Abs, Div, Mul, Add, Clamp } from "../src/primitive/index.js";
+import {
+  Graph,
+  OpRegistry,
+  type GraphSchema,
+  validateGraphSchema,
+} from "../src/flow/index.js";
+import { EMA } from "../src/primitive/core-ops/rolling.js";
+import {
+  Const,
+  Sub,
+  Abs,
+  Div,
+  Mul,
+  Add,
+  Clamp,
+} from "../src/primitive/index.js";
 
 describe("Agent Generated Schema", () => {
   it("should load and validate AgentGenScheme.json", () => {
@@ -50,7 +63,13 @@ describe("Agent Generated Schema", () => {
     });
 
     // Execute the graph
-    await graph.onData({ open: 100, high: 105, low: 95, close: 102, volume: 1000 });
+    await graph.update({
+      open: 100,
+      high: 105,
+      low: 95,
+      close: 102,
+      volume: 1000,
+    });
 
     expect(outputs.length).toBe(1);
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Graph, makeOp } from "../src/flow/Graph.js";
-import { EMA, SMA } from "../src/fn/Foundation.js";
+import { EMA, SMA } from "../src/primitive/core-ops/rolling.js";
 
 describe("Graph", () => {
   it.concurrent(
@@ -15,8 +15,8 @@ describe("Graph", () => {
           outputs.push(output);
         });
 
-      await g.onData(100);
-      await g.onData(200);
+      await g.update(100);
+      await g.update(200);
 
       expect(outputs.length).toBe(2);
       expect(outputs[0].tick).toBe(100);
@@ -40,9 +40,9 @@ describe("Graph", () => {
           outputs.push(output);
         });
 
-      await g.onData(100);
-      await g.onData(200);
-      await g.onData(300);
+      await g.update(100);
+      await g.update(200);
+      await g.update(300);
 
       expect(outputs.length).toBe(3);
       expect(outputs[0].fast).toBeCloseTo(100);
@@ -59,8 +59,8 @@ describe("Graph", () => {
       outputs.push(output);
     });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].ema).toBeCloseTo(100);
@@ -77,8 +77,8 @@ describe("Graph", () => {
         outputs.push(output);
       });
 
-    await g.onData({ price: 100, volume: 1000 });
-    await g.onData({ price: 200, volume: 2000 });
+    await g.update({ price: 100, volume: 1000 });
+    await g.update({ price: 200, volume: 2000 });
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].tick.price).toBe(100);
@@ -89,7 +89,7 @@ describe("Graph", () => {
   it.concurrent("should handle multiple dependencies", async () => {
     const outputs: any[] = [];
     const sumNode = {
-      onData: (a: number, b: number) => a + b,
+      update: (a: number, b: number) => a + b,
     };
 
     const g = new Graph("tick");
@@ -104,8 +104,8 @@ describe("Graph", () => {
         outputs.push(output);
       });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[1].sum).toBeCloseTo(outputs[1].ema1 + outputs[1].ema2, 1);
@@ -116,7 +116,7 @@ describe("Graph", () => {
     async () => {
       const outputs: any[] = [];
       const sumNode = {
-        onData: (a: number, b: number) => a + b,
+        update: (a: number, b: number) => a + b,
       };
 
       const g = new Graph("tick");
@@ -131,8 +131,8 @@ describe("Graph", () => {
           outputs.push(output);
         });
 
-      await g.onData(100);
-      await g.onData(200);
+      await g.update(100);
+      await g.update(200);
 
       expect(outputs.length).toBe(2);
       expect(outputs[0].ema1).toBeCloseTo(100);
@@ -148,9 +148,9 @@ describe("Graph", () => {
       const outputs: any[] = [];
       const g = new Graph("tick");
 
-      g.add("final", { onData: (a: number, b: number) => a * b })
+      g.add("final", { update: (a: number, b: number) => a * b })
         .depends("diff", "fast")
-        .add("diff", { onData: (a: number, b: number) => a - b })
+        .add("diff", { update: (a: number, b: number) => a - b })
         .depends("fast", "slow")
         .add("slow", new EMA({ period: 3 }))
         .depends("tick")
@@ -160,9 +160,9 @@ describe("Graph", () => {
           outputs.push(output);
         });
 
-      await g.onData(100);
-      await g.onData(200);
-      await g.onData(300);
+      await g.update(100);
+      await g.update(200);
+      await g.update(300);
 
       expect(outputs.length).toBe(3);
       expect(outputs[2].fast).toBeGreaterThan(outputs[2].slow);
@@ -182,7 +182,7 @@ describe("Graph", () => {
         private buffer: number[] = [];
         private batchSize = 3;
 
-        onData(value: number): number[] | undefined {
+        update(value: number): number[] | undefined {
           this.buffer.push(value);
           if (this.buffer.length >= this.batchSize) {
             const result = [...this.buffer];
@@ -194,7 +194,7 @@ describe("Graph", () => {
       }
 
       const sumArray = {
-        onData: (arr: number[]) => arr.reduce((sum, v) => sum + v, 0),
+        update: (arr: number[]) => arr.reduce((sum, v) => sum + v, 0),
       };
 
       const g = new Graph("tick");
@@ -207,11 +207,11 @@ describe("Graph", () => {
           outputs.push(output);
         });
 
-      await g.onData(1);
-      await g.onData(2);
-      await g.onData(3);
-      await g.onData(4);
-      await g.onData(5);
+      await g.update(1);
+      await g.update(2);
+      await g.update(3);
+      await g.update(4);
+      await g.update(5);
 
       expect(outputs.length).toBe(5);
       expect(outputs[0].batch).toBeUndefined();
@@ -246,8 +246,8 @@ describe("Graph", () => {
         outputs.push(output);
       });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].ema).toBeCloseTo(100);
@@ -264,8 +264,8 @@ describe("Graph", () => {
 
     g.add("ema", new EMA({ period: 2 })).depends("tick");
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(updates.length).toBe(2);
     expect(updates[0].name).toBe("ema");
@@ -289,7 +289,7 @@ describe("Graph", () => {
 
     g.add("ema", new EMA({ period: 2 })).depends("tick");
 
-    await g.onData(100);
+    await g.update(100);
 
     expect(updates1).toEqual(["ema"]);
     expect(updates2).toEqual(["ema"]);
@@ -306,7 +306,7 @@ describe("Graph", () => {
 
     g.add("ema", new EMA({ period: 2 })).depends("tick");
 
-    await g.onData(100);
+    await g.update(100);
 
     expect(updates.length).toBe(1);
     expect(updates[0]).toContain("ema:100");
@@ -330,8 +330,8 @@ describe("Graph", () => {
       .add("slow", new EMA({ period: 3 }))
       .depends("tick");
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(fastUpdates.length).toBe(2);
     expect(slowUpdates.length).toBe(2);
@@ -346,7 +346,7 @@ describe("Graph", () => {
 
     class MaybeNode {
       private count = 0;
-      onData(value: number): number | undefined {
+      update(value: number): number | undefined {
         this.count++;
         return this.count === 2 ? value : undefined;
       }
@@ -358,9 +358,9 @@ describe("Graph", () => {
 
     g.add("maybe", new MaybeNode()).depends("tick");
 
-    await g.onData(100);
-    await g.onData(200);
-    await g.onData(300);
+    await g.update(100);
+    await g.update(200);
+    await g.update(300);
 
     expect(updates).toEqual(["maybe"]);
   });
@@ -383,7 +383,7 @@ describe("Graph", () => {
       .add("sma", new SMA({ period: 2 }))
       .depends("tick");
 
-    await g.onData(100);
+    await g.update(100);
 
     expect(emaUpdates).toEqual([100]);
     expect(smaUpdates).toEqual([100]);
@@ -396,7 +396,7 @@ describe("Graph", () => {
     class AsyncNode {
       constructor(private name: string, private delay: number) {}
 
-      async onData(value: number): Promise<number> {
+      async update(value: number): Promise<number> {
         executionOrder.push(`${this.name}-start`);
         await new Promise((resolve) => setTimeout(resolve, this.delay));
         executionOrder.push(`${this.name}-end`);
@@ -410,14 +410,14 @@ describe("Graph", () => {
       .depends("tick")
       .add("fast", new AsyncNode("fast", 10))
       .depends("tick")
-      .add("sum", { onData: (a: number, b: number) => a + b })
+      .add("sum", { update: (a: number, b: number) => a + b })
       .depends("slow", "fast")
       .output((output) => {
         outputs.push(output);
       });
 
     const start = Date.now();
-    await g.onData(10);
+    await g.update(10);
     const duration = Date.now() - start;
 
     expect(outputs.length).toBe(1);
@@ -450,12 +450,9 @@ describe("Graph", () => {
 
   it.concurrent("should detect simple cycle", () => {
     const g = new Graph("tick");
-    const identity = { onData: (x: number) => x };
+    const identity = { update: (x: number) => x };
 
-    g.add("a", identity)
-      .depends("b")
-      .add("b", identity)
-      .depends("a");
+    g.add("a", identity).depends("b").add("b", identity).depends("a");
 
     const result = g.validate();
     expect(result.valid).toBe(false);
@@ -469,7 +466,7 @@ describe("Graph", () => {
 
   it.concurrent("should detect cycle in longer chain", () => {
     const g = new Graph("tick");
-    const identity = { onData: (x: number) => x };
+    const identity = { update: (x: number) => x };
 
     g.add("a", identity)
       .depends("tick")
@@ -485,26 +482,26 @@ describe("Graph", () => {
     expect(result.errors).toEqual([]);
 
     const g2 = new Graph("tick");
-    g2.add("a", identity)
+    g2.add("a", { update: (x: number) => x })
       .depends("tick")
-      .add("b", identity)
+      .add("b", { update: (x: number) => x })
       .depends("a")
-      .add("c", identity)
+      .add("c", { update: (x: number) => x })
       .depends("b")
-      .add("d", identity)
+      .add("d", { update: (x: number) => x })
       .depends("c")
-      .add("e", identity)
+      .add("e", { update: (x: number) => x })
       .depends("d", "b");
 
     const result2 = g2.validate();
     expect(result2.valid).toBe(true);
 
     const g3 = new Graph("tick");
-    g3.add("a", identity)
+    g3.add("a", { update: (x: number) => x })
       .depends("b")
-      .add("b", identity)
+      .add("b", { update: (x: number) => x })
       .depends("c")
-      .add("c", identity)
+      .add("c", { update: (x: number) => x })
       .depends("a");
 
     const result3 = g3.validate();
@@ -518,7 +515,7 @@ describe("Graph", () => {
 
   it.concurrent("should detect node with unknown dependency", () => {
     const g = new Graph("tick");
-    const identity = { onData: (x: number) => x };
+    const identity = { update: (x: number) => x };
 
     g.add("a", identity)
       .depends("tick")
@@ -531,7 +528,9 @@ describe("Graph", () => {
     expect(result.valid).toBe(false);
     // Nodes with unknown dependencies are reported as unreachable
     expect(result.errors.some((e) => e.type === "unreachable")).toBe(true);
-    const unreachableError = result.errors.find((e) => e.type === "unreachable");
+    const unreachableError = result.errors.find(
+      (e) => e.type === "unreachable"
+    );
     if (unreachableError && unreachableError.type === "unreachable") {
       // Both "nonexistent" and "orphan" are unreachable
       expect(unreachableError.nodes).toContain("orphan");
@@ -541,7 +540,7 @@ describe("Graph", () => {
 
   it.concurrent("should detect two independent cycles", () => {
     const g = new Graph("tick");
-    const identity = { onData: (x: number) => x };
+    const identity = { update: (x: number) => x };
 
     // First cycle: a -> b -> c -> a
     g.add("a", identity)
@@ -552,10 +551,7 @@ describe("Graph", () => {
       .depends("a");
 
     // Second cycle: d -> e -> d
-    g.add("d", identity)
-      .depends("e")
-      .add("e", identity)
-      .depends("d");
+    g.add("d", identity).depends("e").add("e", identity).depends("d");
 
     const result = g.validate();
     expect(result.valid).toBe(false);
@@ -592,7 +588,7 @@ describe("Graph", () => {
 
   it.concurrent("should detect both cycles separately", () => {
     const g = new Graph("tick");
-    const identity = { onData: (x: number) => x };
+    const identity = { update: (x: number) => x };
 
     // First cycle: a -> b -> c -> a
     g.add("a", identity)
@@ -603,10 +599,7 @@ describe("Graph", () => {
       .depends("a");
 
     // Second cycle: d -> e -> d
-    g.add("d", identity)
-      .depends("e")
-      .add("e", identity)
-      .depends("d");
+    g.add("d", identity).depends("e").add("e", identity).depends("d");
 
     const result = g.validate();
     expect(result.valid).toBe(false);

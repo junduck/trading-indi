@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { Graph, OpRegistry, type GraphSchema } from "../src/flow/index.js";
-import { EMA } from "../src/fn/Foundation.js";
+import { EMA } from "../src/primitive/core-ops/rolling.js";
 import type { OperatorDoc } from "../src/types/OpDoc.js";
 
 describe("Graph JSON Serialization", () => {
@@ -26,8 +26,8 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData(100);
-    await g.onData(200);
+    await g.update(100);
+    await g.update(200);
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].tick).toBe(100);
@@ -64,9 +64,9 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData(100);
-    await g.onData(200);
-    await g.onData(300);
+    await g.update(100);
+    await g.update(200);
+    await g.update(300);
 
     expect(outputs.length).toBe(3);
     expect(outputs[0].fast).toBeCloseTo(100);
@@ -96,8 +96,8 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData({ price: 100, volume: 1000 });
-    await g.onData({ price: 200, volume: 2000 });
+    await g.update({ price: 100, volume: 1000 });
+    await g.update({ price: 200, volume: 2000 });
 
     expect(outputs.length).toBe(2);
     expect(outputs[0].tick.price).toBe(100);
@@ -109,18 +109,16 @@ describe("Graph JSON Serialization", () => {
     class Subtract {
       static readonly doc: OperatorDoc = {
         type: "Subtract",
-        onDataParam: "a: number, b: number",
+        update: "a: number, b: number",
         output: "number",
       };
 
-      onData(a: number, b: number): number {
+      update(a: number, b: number): number {
         return a - b;
       }
     }
 
-    const registry = new OpRegistry()
-      .register(EMA)
-      .register(Subtract);
+    const registry = new OpRegistry().register(EMA).register(Subtract);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -152,9 +150,9 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData(100);
-    await g.onData(200);
-    await g.onData(300);
+    await g.update(100);
+    await g.update(200);
+    await g.update(300);
 
     expect(outputs.length).toBe(3);
     expect(outputs[2].diff).toBeCloseTo(outputs[2].fast - outputs[2].slow, 1);
@@ -184,11 +182,11 @@ describe("Graph JSON Serialization", () => {
     class Identity {
       static readonly doc: OperatorDoc = {
         type: "Identity",
-        onDataParam: "x: number",
+        update: "x: number",
         output: "number",
       };
 
-      onData(x: number): number {
+      update(x: number): number {
         return x;
       }
     }
@@ -213,7 +211,7 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData(42);
+    await g.update(42);
 
     expect(outputs.length).toBe(1);
     expect(outputs[0].identity).toBe(42);
@@ -223,11 +221,11 @@ describe("Graph JSON Serialization", () => {
     class Multiply {
       static readonly doc: OperatorDoc = {
         type: "Multiply",
-        onDataParam: "a: number, b: number",
+        update: "a: number, b: number",
         output: "number",
       };
 
-      onData(a: number, b: number): number {
+      update(a: number, b: number): number {
         return a * b;
       }
     }
@@ -235,11 +233,11 @@ describe("Graph JSON Serialization", () => {
     class Subtract {
       static readonly doc: OperatorDoc = {
         type: "Subtract",
-        onDataParam: "a: number, b: number",
+        update: "a: number, b: number",
         output: "number",
       };
 
-      onData(a: number, b: number): number {
+      update(a: number, b: number): number {
         return a - b;
       }
     }
@@ -284,9 +282,9 @@ describe("Graph JSON Serialization", () => {
       outputs.push(output);
     });
 
-    await g.onData(100);
-    await g.onData(200);
-    await g.onData(300);
+    await g.update(100);
+    await g.update(200);
+    await g.update(300);
 
     expect(outputs.length).toBe(3);
     expect(outputs[2].fast).toBeGreaterThan(outputs[2].slow);

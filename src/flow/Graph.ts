@@ -26,7 +26,7 @@ export interface Op {
   readonly __isDagNode: true;
   readonly inputPath: string[];
 
-  onData(state: Record<string, any>): any;
+  predSatisfied(state: Record<string, any>): any;
 }
 
 class OpImpl implements Op {
@@ -37,15 +37,15 @@ class OpImpl implements Op {
     this.inputPath = inputPath;
   }
 
-  onData(state: Record<string, any>): any {
+  predSatisfied(state: Record<string, any>): any {
     const args = this.inputPath.map((path) => resolvePath(state, path));
-    return this.callable.onData(...args);
+    return this.callable.update(...args);
   }
 }
 
 /**
  * Wraps an operator for use in the graph.
- * @param callable callable instance with onData method
+ * @param callable callable instance with update method
  * @param inputPath Array of paths to extract from state as input to callable
  */
 export function makeOp(callable: any, inputPath: string[]): Op {
@@ -229,7 +229,7 @@ C fires: -1 - 1 = -2 → skip (not 0)
    */
 
   /** Execute the graph with new input data. */
-  async onData(data: any): Promise<void> {
+  async update(data: any): Promise<void> {
     let state: Record<string, any> = { [this.rootNode]: data };
 
     // Initialize topological sort
@@ -268,7 +268,7 @@ C fires: -1 - 1 = -2 → skip (not 0)
 
         if (!node) continue;
 
-        const result = node.onData(state);
+        const result = node.predSatisfied(state);
 
         if (result === undefined) continue;
 

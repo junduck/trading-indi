@@ -1,17 +1,8 @@
 export type { PeriodOptions } from "./types/PeriodOptions.js";
 export type { BarData, BarWith } from "./types/BarData.js";
 
-// Functional primitives
-export * as fn from "./fn/index.js";
-
-export {
-  SMA,
-  useSMA,
-  EMA,
-  useEMA,
-  EWMA,
-  useEWMA,
-} from "./indicators/MovingAvg.js";
+export { SMA, EMA, EWMA } from "./primitive/core-ops/rolling.js";
+export { useSMA, useEMA, useEWMA } from "./indicators/MovingAvg.js";
 
 export {
   Volatility,

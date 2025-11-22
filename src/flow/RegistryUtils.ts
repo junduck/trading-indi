@@ -3,10 +3,8 @@ import { OpRegistry } from "./Registry.js";
 import { Const } from "../primitive/Const.js";
 import * as arith from "../primitive/arithmetic.js";
 import * as logical from "../primitive/logical.js";
-
-import * as fnFoundation from "../fn/Foundation.js";
-import * as fnStats from "../fn/Stats.js";
-import * as fnStatsDeviate from "../fn/StatsDeviation.js";
+import * as core_online from "../primitive/core-ops/online.js";
+import * as core_rolling from "../primitive/core-ops/rolling.js";
 
 import * as indOscillators from "../indicators/Oscillators.js";
 import * as indVolatility from "../indicators/Volatility.js";
@@ -17,39 +15,45 @@ import * as indAggregate from "../indicators/Aggregate.js";
 import * as indVolume from "../indicators/Volume.js";
 
 /**
+ * Register Const primitive.
+ */
+export function regConst(reg: OpRegistry): void {
+  reg.register(Const, "const");
+}
+
+/**
  * Register all arithmetic primitives.
  */
 export function regArithmeticPrimitive(reg: OpRegistry): void {
   reg
-    .register(Const)
-    .register(arith.Add)
-    .register(arith.Sub)
-    .register(arith.Mul)
-    .register(arith.Div)
-    .register(arith.Mod)
-    .register(arith.Pow)
-    .register(arith.Min)
-    .register(arith.Max)
-    .register(arith.Negate)
-    .register(arith.Abs)
-    .register(arith.Sign)
-    .register(arith.Floor)
-    .register(arith.Ceil)
-    .register(arith.Round)
-    .register(arith.Sqrt)
-    .register(arith.Log)
-    .register(arith.Exp)
-    .register(arith.Log1p)
-    .register(arith.Expm1)
-    .register(arith.Reciprocal)
-    .register(arith.Clamp)
-    .register(arith.Lerp)
-    .register(arith.SumOf)
-    .register(arith.ProdOf)
-    .register(arith.AvgOf)
-    .register(arith.MinOf)
-    .register(arith.MaxOf)
-    .register(arith.RelDist);
+    .register(arith.Add, "arithmetic")
+    .register(arith.Sub, "arithmetic")
+    .register(arith.Mul, "arithmetic")
+    .register(arith.Div, "arithmetic")
+    .register(arith.Mod, "arithmetic")
+    .register(arith.Pow, "arithmetic")
+    .register(arith.Min, "arithmetic")
+    .register(arith.Max, "arithmetic")
+    .register(arith.Negate, "arithmetic")
+    .register(arith.Abs, "arithmetic")
+    .register(arith.Sign, "arithmetic")
+    .register(arith.Floor, "arithmetic")
+    .register(arith.Ceil, "arithmetic")
+    .register(arith.Round, "arithmetic")
+    .register(arith.Sqrt, "arithmetic")
+    .register(arith.Log, "arithmetic")
+    .register(arith.Exp, "arithmetic")
+    .register(arith.Log1p, "arithmetic")
+    .register(arith.Expm1, "arithmetic")
+    .register(arith.Reciprocal, "arithmetic")
+    .register(arith.Clamp, "arithmetic")
+    .register(arith.Lerp, "arithmetic")
+    .register(arith.SumOf, "arithmetic")
+    .register(arith.ProdOf, "arithmetic")
+    .register(arith.AvgOf, "arithmetic")
+    .register(arith.MinOf, "arithmetic")
+    .register(arith.MaxOf, "arithmetic")
+    .register(arith.RelDist, "arithmetic");
 }
 
 /**
@@ -57,53 +61,80 @@ export function regArithmeticPrimitive(reg: OpRegistry): void {
  */
 export function regLogicalPrimitive(reg: OpRegistry): void {
   reg
-    .register(logical.LT)
-    .register(logical.GT)
-    .register(logical.LTE)
-    .register(logical.GTE)
-    .register(logical.EQ)
-    .register(logical.NEQ)
-    .register(logical.Between)
-    .register(logical.Outside)
-    .register(logical.And)
-    .register(logical.Or)
-    .register(logical.Not)
-    .register(logical.Xor)
-    .register(logical.AllOf)
-    .register(logical.AnyOf)
-    .register(logical.NoneOf)
-    .register(logical.IsNaN)
-    .register(logical.IsFinite)
-    .register(logical.IsPositive)
-    .register(logical.IsNegative)
-    .register(logical.IsZero)
-    .register(logical.IfThenElse)
-    .register(logical.Gate)
-    .register(logical.Coalesce);
+    .register(logical.LT, "logical")
+    .register(logical.GT, "logical")
+    .register(logical.LTE, "logical")
+    .register(logical.GTE, "logical")
+    .register(logical.EQ, "logical")
+    .register(logical.NEQ, "logical")
+    .register(logical.Between, "logical")
+    .register(logical.Outside, "logical")
+    .register(logical.And, "logical")
+    .register(logical.Or, "logical")
+    .register(logical.Not, "logical")
+    .register(logical.Xor, "logical")
+    .register(logical.AllOf, "logical")
+    .register(logical.AnyOf, "logical")
+    .register(logical.NoneOf, "logical")
+    .register(logical.IsNaN, "logical")
+    .register(logical.IsFinite, "logical")
+    .register(logical.IsPositive, "logical")
+    .register(logical.IsNegative, "logical")
+    .register(logical.IsZero, "logical")
+    .register(logical.IfThenElse, "logical")
+    .register(logical.Gate, "logical")
+    .register(logical.Coalesce, "logical");
 }
 
 /**
- * Register foundation operators from src/fn/Foundation.ts.
+ * Register core online operators.
  */
-export function regFoundation(reg: OpRegistry): void {
+export function regCoreOnline(reg: OpRegistry): void {
   reg
-    .register(fnFoundation.EMA)
-    .register(fnFoundation.EWMA)
-    .register(fnFoundation.SMA)
-    .register(fnFoundation.Min)
-    .register(fnFoundation.Max)
-    .register(fnFoundation.Sum)
-    .register(fnFoundation.MinMax);
+    .register(core_online.CMA, "core.online")
+    .register(core_online.CuVar, "core.online")
+    .register(core_online.CuStddev, "core.online")
+    .register(core_online.CuSkew, "core.online")
+    .register(core_online.CuKurt, "core.online")
+    .register(core_online.CuCov, "core.online")
+    .register(core_online.CuCorr, "core.online")
+    .register(core_online.CuBeta, "core.online");
+}
+
+/**
+ * Register core rolling operators.
+ */
+export function regCoreRolling(reg: OpRegistry): void {
   reg
-    .register(fnStats.Variance)
-    .register(fnStats.Stddev)
-    .register(fnStats.ZScore)
-    .register(fnStats.VarianceEW)
-    .register(fnStats.ZScoreEW)
-    .register(fnStats.Cov)
-    .register(fnStats.Corr)
-    .register(fnStats.Beta);
-  reg.register(fnStatsDeviate.MeanAD);
+    .register(core_rolling.RollingSum, "core.rolling")
+    .register(core_rolling.SMA, "core.rolling")
+    .register(core_rolling.EMA, "core.rolling")
+    .register(core_rolling.EWMA, "core.rolling")
+    .register(core_rolling.RollingVar, "core.rolling")
+    .register(core_rolling.RollingVarEW, "core.rolling")
+    .register(core_rolling.RollingStddev, "core.rolling")
+    .register(core_rolling.RollingStddevEW, "core.rolling")
+    .register(core_rolling.RollingZScore, "core.rolling")
+    .register(core_rolling.RollingZScoreEW, "core.rolling")
+    .register(core_rolling.RollingCov, "core.rolling")
+    .register(core_rolling.RollingCovEW, "core.rolling")
+    .register(core_rolling.RollingCorr, "core.rolling")
+    .register(core_rolling.RollingCorrEW, "core.rolling")
+    .register(core_rolling.RollingBeta, "core.rolling")
+    .register(core_rolling.RollingBetaEW, "core.rolling")
+    .register(core_rolling.RollingMin, "core.rolling")
+    .register(core_rolling.RollingMax, "core.rolling")
+    .register(core_rolling.RollingMinMax, "core.rolling")
+    .register(core_rolling.RollingArgMin, "core.rolling")
+    .register(core_rolling.RollingArgMax, "core.rolling")
+    .register(core_rolling.RollingArgMinMax, "core.rolling")
+    .register(core_rolling.RollingSkew, "core.rolling")
+    .register(core_rolling.RollingKurt, "core.rolling")
+    .register(core_rolling.MeanAbsDeviation, "core.rolling")
+    .register(core_rolling.MedianAbsDeviation, "core.rolling")
+    .register(core_rolling.IQR, "core.rolling")
+    .register(core_rolling.RollingMedian, "core.rolling")
+    .register(core_rolling.RollingQuantile, "core.rolling");
 }
 
 /**
@@ -123,7 +154,7 @@ export function regOscillatorIndicators(reg: OpRegistry): void {
   ];
 
   oscillators.forEach((osc) => {
-    if (osc) reg.register(osc);
+    if (osc) reg.register(osc, "ti.oscillator");
   });
 }
 
@@ -145,7 +176,7 @@ export function regVolatilityIndicators(reg: OpRegistry): void {
   ];
 
   volatility.forEach((vol) => {
-    if (vol) reg.register(vol);
+    if (vol) reg.register(vol, "ti.volatility");
   });
 }
 
@@ -167,7 +198,7 @@ export function regMomentumIndicators(reg: OpRegistry): void {
   ];
 
   momentum.forEach((mom) => {
-    if (mom) reg.register(mom);
+    if (mom) reg.register(mom, "ti.momentum");
   });
 }
 
@@ -191,7 +222,7 @@ export function regTrendIndicators(reg: OpRegistry): void {
   ];
 
   trend.forEach((tr) => {
-    if (tr) reg.register(tr);
+    if (tr) reg.register(tr, "ti.trend");
   });
 }
 
@@ -206,7 +237,7 @@ export function regStochasticIndicators(reg: OpRegistry): void {
   ];
 
   stochastic.forEach((sto) => {
-    if (sto) reg.register(sto);
+    if (sto) reg.register(sto, "ti.stochastic");
   });
 }
 
@@ -217,7 +248,7 @@ export function regAggregateIndicators(reg: OpRegistry): void {
   const aggregate = [indAggregate.OHLCV];
 
   aggregate.forEach((agg) => {
-    if (agg) reg.register(agg);
+    if (agg) reg.register(agg, "ti.aggr");
   });
 }
 
@@ -245,7 +276,7 @@ export function regVolumeIndicators(reg: OpRegistry): void {
   ];
 
   volume.forEach((vol) => {
-    if (vol) reg.register(vol);
+    if (vol) reg.register(vol, "ti.volume");
   });
 }
 
@@ -263,11 +294,33 @@ export function regAllIndicators(reg: OpRegistry): void {
 }
 
 /**
- * Register everything: primitives, functional basics, and all indicators.
+ * Register everything: primitives, core operators, and all indicators.
  */
 export function regAll(reg: OpRegistry): void {
+  regConst(reg);
   regArithmeticPrimitive(reg);
   regLogicalPrimitive(reg);
-  regFoundation(reg);
+  regCoreOnline(reg);
+  regCoreRolling(reg);
   regAllIndicators(reg);
+}
+
+/**
+ * Register primitives
+ */
+export function regPrimitive(reg: OpRegistry): void {
+  regConst(reg);
+  regArithmeticPrimitive(reg);
+  regLogicalPrimitive(reg);
+}
+
+/**
+ * Register primitive and core operators
+ */
+export function regCoreOps(reg: OpRegistry): void {
+  regConst(reg);
+  regArithmeticPrimitive(reg);
+  regLogicalPrimitive(reg);
+  regCoreOnline(reg);
+  regCoreRolling(reg);
 }

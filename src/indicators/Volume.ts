@@ -1,7 +1,7 @@
 import type { BarWith } from "../types/BarData.js";
 import type { PeriodWith } from "../types/PeriodOptions.js";
 import {
-  Kahan
+  Kahan,
   CircularBuffer,
   EMA as CoreEMA,
   RollingSum,

@@ -11,18 +11,27 @@ export type OpContext = OperatorDoc;
  */
 export class OpRegistry {
   private types = new Map<string, new (opts: any) => any>();
+  private groups = new Map<string, OpContext[]>();
 
   /**
    * Register a type with its constructor.
    * Type name is extracted from ctor.doc.type.
    * @param ctor Constructor function with static doc property
+   * @param group Group name (default: "")
    */
-  register(ctor: new (opts: any) => any): this {
+  register(ctor: new (opts: any) => any, group = ""): this {
     const doc = (ctor as any).doc as OperatorDoc | undefined;
     if (!doc?.type) {
       throw new Error("Constructor must have static doc.type property");
     }
     this.types.set(doc.type, ctor);
+
+    // Add to group
+    if (!this.groups.has(group)) {
+      this.groups.set(group, []);
+    }
+    this.groups.get(group)!.push(doc);
+
     return this;
   }
 
@@ -55,15 +64,10 @@ export class OpRegistry {
   }
 
   /**
-   * Generate all OpContexts for registered types.
-   * @returns Array of OpContext JSON objects
+   * Generate all OpContexts for registered types, grouped.
+   * @returns Map from group name to array of OpContext JSON objects
    */
-  getAllContexts(): OpContext[] {
-    const contexts: OpContext[] = [];
-    for (const ctor of this.types.values()) {
-      const doc = (ctor as any).doc;
-      if (doc) contexts.push(doc);
-    }
-    return contexts;
+  getAllContexts(): Map<string, OpContext[]> {
+    return this.groups;
   }
 }

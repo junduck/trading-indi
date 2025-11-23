@@ -7,18 +7,41 @@ import {
   isBullish,
 } from "./utils.js";
 import { isDoji } from "./pattern-single.js";
+import type { OperatorDoc } from "../types/OpDoc.js";
 
 /**
  * Evening Star - bearish reversal pattern
+ * Detects a three-candle pattern where a large bullish candle is followed by a small body candle
+ * that gaps up, and then a large bearish candle that closes below the midpoint of the first candle.
  */
 export class EveningStar {
+  static readonly doc: OperatorDoc = {
+    type: "EveningStar",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of EveningStar pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Evening Star pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -54,22 +77,53 @@ export class EveningStar {
     return bar3.close < (bar1.open + bar1.close) / 2;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Evening Star pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useEveningStar(opts?: PeriodWith<"period">) {
+  return new EveningStar(opts);
+}
+
 /**
  * Morning Doji Star - bullish reversal pattern with doji
+ * Detects a three-candle pattern where a large bearish candle is followed by a doji
+ * that gaps down, and then a large bullish candle that closes above the midpoint of the first candle.
  */
 export class MorningDojiStar {
+  static readonly doc: OperatorDoc = {
+    type: "MorningDojiStar",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of MorningDojiStar pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Morning Doji Star pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -105,22 +159,53 @@ export class MorningDojiStar {
     return bar3.close > (bar1.open + bar1.close) / 2;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Morning Doji Star pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useMorningDojiStar(opts?: PeriodWith<"period">) {
+  return new MorningDojiStar(opts);
+}
+
 /**
  * Evening Doji Star - bearish reversal pattern with doji
+ * Detects a three-candle pattern where a large bullish candle is followed by a doji
+ * that gaps up, and then a large bearish candle that closes below the midpoint of the first candle.
  */
 export class EveningDojiStar {
+  static readonly doc: OperatorDoc = {
+    type: "EveningDojiStar",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of EveningDojiStar pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Evening Doji Star pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -156,17 +241,42 @@ export class EveningDojiStar {
     return bar3.close < (bar1.open + bar1.close) / 2;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Evening Doji Star pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useEveningDojiStar(opts?: PeriodWith<"period">) {
+  return new EveningDojiStar(opts);
+}
+
 /**
  * Abandoned Baby Bullish - rare bullish reversal pattern
+ * Detects a three-candle pattern where a bearish candle is followed by a doji that gaps down,
+ * and then a bullish candle that gaps up from the doji.
  */
 export class AbandonedBabyBullish {
+  static readonly doc: OperatorDoc = {
+    type: "AbandonedBabyBullish",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Abandoned Baby Bullish pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -201,17 +311,42 @@ export class AbandonedBabyBullish {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Abandoned Baby Bullish pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useAbandonedBabyBullish() {
+  return new AbandonedBabyBullish();
+}
+
 /**
  * Abandoned Baby Bearish - rare bearish reversal pattern
+ * Detects a three-candle pattern where a bullish candle is followed by a doji that gaps up,
+ * and then a bearish candle that gaps down from the doji.
  */
 export class AbandonedBabyBearish {
+  static readonly doc: OperatorDoc = {
+    type: "AbandonedBabyBearish",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Abandoned Baby Bearish pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -246,22 +381,52 @@ export class AbandonedBabyBearish {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Abandoned Baby Bearish pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useAbandonedBabyBearish() {
+  return new AbandonedBabyBearish();
+}
+
 /**
  * Three White Soldiers - bullish continuation pattern
+ * Detects three consecutive long bullish candles with specific opening and closing relationships.
  */
 export class ThreeWhiteSoldiers {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeWhiteSoldiers",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of ThreeWhiteSoldiers pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three White Soldiers pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -314,6 +479,11 @@ export class ThreeWhiteSoldiers {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three White Soldiers pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
@@ -321,15 +491,36 @@ export class ThreeWhiteSoldiers {
 
 /**
  * Three Black Crows - bearish continuation pattern
+ * Detects three consecutive long bearish candles with specific opening and closing relationships.
  */
 export class ThreeBlackCrows {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeBlackCrows",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of ThreeBlackCrows pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Black Crows pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -382,6 +573,11 @@ export class ThreeBlackCrows {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Black Crows pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
@@ -389,10 +585,26 @@ export class ThreeBlackCrows {
 
 /**
  * Three Inside Up - bullish reversal pattern
+ * Detects a three-candle pattern where the first two bars form a bullish harami,
+ * and the third bar confirms with a higher close.
  */
 export class ThreeInsideUp {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeInsideUp",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Inside Up pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -425,17 +637,42 @@ export class ThreeInsideUp {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Inside Up pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useThreeInsideUp() {
+  return new ThreeInsideUp();
+}
+
 /**
  * Three Inside Down - bearish reversal pattern
+ * Detects a three-candle pattern where the first two bars form a bearish harami,
+ * and the third bar confirms with a lower close.
  */
 export class ThreeInsideDown {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeInsideDown",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Inside Down pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -468,17 +705,42 @@ export class ThreeInsideDown {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Inside Down pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useThreeInsideDown() {
+  return new ThreeInsideDown();
+}
+
 /**
  * Three Outside Up - bullish reversal pattern
+ * Detects a three-candle pattern where the first two bars form a bullish engulfing,
+ * and the third bar confirms with a higher close and higher high.
  */
 export class ThreeOutsideUp {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeOutsideUp",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Outside Up pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -515,17 +777,42 @@ export class ThreeOutsideUp {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Outside Up pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useThreeOutsideUp() {
+  return new ThreeOutsideUp();
+}
+
 /**
  * Three Outside Down - bearish reversal pattern
+ * Detects a three-candle pattern where the first two bars form a bearish engulfing,
+ * and the third bar confirms with a lower close and lower low.
  */
 export class ThreeOutsideDown {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeOutsideDown",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Outside Down pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -562,22 +849,53 @@ export class ThreeOutsideDown {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Outside Down pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useThreeOutsideDown() {
+  return new ThreeOutsideDown();
+}
+
 /**
  * Fakey Pattern Bullish - bullish false breakout pattern
+ * Detects a three-candle pattern where a strong bearish move is followed by an inside bar,
+ * and then a false breakout below followed by a reversal above the first bar's high.
  */
 export class FakeyPatternBullish {
+  static readonly doc: OperatorDoc = {
+    type: "FakeyPatternBullish",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of FakeyPatternBullish pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Fakey Pattern Bullish is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -613,22 +931,53 @@ export class FakeyPatternBullish {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Fakey Pattern Bullish is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useFakeyPatternBullish(opts?: PeriodWith<"period">) {
+  return new FakeyPatternBullish(opts);
+}
+
 /**
  * Fakey Pattern Bearish - bearish false breakout pattern
+ * Detects a three-candle pattern where a strong bullish move is followed by an inside bar,
+ * and then a false breakout above followed by a reversal below the first bar's low.
  */
 export class FakeyPatternBearish {
+  static readonly doc: OperatorDoc = {
+    type: "FakeyPatternBearish",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of FakeyPatternBearish pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Fakey Pattern Bearish is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -664,24 +1013,55 @@ export class FakeyPatternBearish {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Fakey Pattern Bearish is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
+}
+
+export function useFakeyPatternBearish(opts?: PeriodWith<"period">) {
+  return new FakeyPatternBearish(opts);
 }
 
 // Five Bar Patterns
 
 /**
  * Rising Three Methods - bullish continuation pattern
+ * Detects a five-candle pattern where a long bullish candle is followed by three small bearish candles
+ * within its range, and then another bullish candle that closes above the first candle's high.
  */
 export class RisingThreeMethods {
+  static readonly doc: OperatorDoc = {
+    type: "RisingThreeMethods",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of RisingThreeMethods pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Rising Three Methods pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -727,22 +1107,53 @@ export class RisingThreeMethods {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Rising Three Methods pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
 }
 
+export function useRisingThreeMethods(opts?: PeriodWith<"period">) {
+  return new RisingThreeMethods(opts);
+}
+
 /**
  * Falling Three Methods - bearish continuation pattern
+ * Detects a five-candle pattern where a long bearish candle is followed by three small bullish candles
+ * within its range, and then another bearish candle that closes below the first candle's low.
  */
 export class FallingThreeMethods {
+  static readonly doc: OperatorDoc = {
+    type: "FallingThreeMethods",
+    init: "{period?: number}",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private avgBodyLength: AverageBodyLength;
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
 
+  /**
+   * Creates an instance of FallingThreeMethods pattern detector
+   * @param opts - Configuration options for the pattern detector
+   * @param opts.period - Period for calculating average body length (default: 10)
+   */
   constructor(opts: PeriodWith<"period"> = { period: 10 }) {
     this.avgBodyLength = new AverageBodyLength(opts);
   }
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Falling Three Methods pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
@@ -788,30 +1199,56 @@ export class FallingThreeMethods {
     return true;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Falling Three Methods pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
+}
+
+export function useFallingThreeMethods(opts?: PeriodWith<"period">) {
+  return new FallingThreeMethods(opts);
 }
 
 // Four Bar Patterns
 
 /**
  * Three Buddha Top - head and shoulders pattern
+ * Detects a head and shoulders topping pattern with three peaks and two valleys.
+ * Uses an improved detection algorithm with a larger window for proper pattern identification.
  */
 export class ThreeBuddhaTop {
+  static readonly doc: OperatorDoc = {
+    type: "ThreeBuddhaTop",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
   private peaks: { high: number; index: number }[] = [];
   private valleys: { low: number; index: number }[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Three Buddha Top pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
 
-    if (this.bars.length > 4) {
+    // Increased window size for better pattern detection
+    if (this.bars.length > 8) {
       this.bars.shift();
     }
 
-    if (this.bars.length < 4) {
+    if (this.bars.length < 8) {
       return false;
     }
 
@@ -819,19 +1256,31 @@ export class ThreeBuddhaTop {
     this.peaks = [];
     this.valleys = [];
 
-    // Find peaks and valleys
-    for (let i = 1; i < this.bars.length - 1; i++) {
+    // Find peaks and valleys with improved detection
+    for (let i = 2; i < this.bars.length - 2; i++) {
+      const prev2Bar = this.bars[i - 2]!;
       const prevBar = this.bars[i - 1]!;
       const currentBar = this.bars[i]!;
       const nextBar = this.bars[i + 1]!;
+      const next2Bar = this.bars[i + 2]!;
 
-      // Peak detection
-      if (currentBar.high > prevBar.high && currentBar.high > nextBar.high) {
+      // Peak detection: current high is higher than surrounding bars
+      if (
+        currentBar.high > prevBar.high &&
+        currentBar.high > nextBar.high &&
+        currentBar.high > prev2Bar.high &&
+        currentBar.high > next2Bar.high
+      ) {
         this.peaks.push({ high: currentBar.high, index: i });
       }
 
-      // Valley detection
-      if (currentBar.low < prevBar.low && currentBar.low < nextBar.low) {
+      // Valley detection: current low is lower than surrounding bars
+      if (
+        currentBar.low < prevBar.low &&
+        currentBar.low < nextBar.low &&
+        currentBar.low < prev2Bar.low &&
+        currentBar.low < next2Bar.low
+      ) {
         this.valleys.push({ low: currentBar.low, index: i });
       }
     }
@@ -857,13 +1306,18 @@ export class ThreeBuddhaTop {
       return false;
     }
 
-    // Fourth bar should close below neckline
+    // Latest bar should close below neckline
     const neckline = (valley1.low + valley2.low) / 2;
-    const bar4 = this.bars[3]!;
+    const latestBar = this.bars[this.bars.length - 1]!;
 
-    return bar4.close < neckline && bar4.high < peak2.high;
+    return latestBar.close < neckline && latestBar.high < peak2.high;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Three Buddha Top pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
@@ -871,21 +1325,38 @@ export class ThreeBuddhaTop {
 
 /**
  * Inverted Three Buddha - inverse head and shoulders pattern
+ * Detects an inverse head and shoulders bottoming pattern with three valleys and two peaks.
+ * Uses an improved detection algorithm with a larger window for proper pattern identification.
  */
 export class InvertedThreeBuddha {
+  static readonly doc: OperatorDoc = {
+    type: "InvertedThreeBuddha",
+    update: "open, close, high, low",
+    output: "boolean",
+  };
+
   private bars: BarWith<"open" | "close" | "high" | "low">[] = [];
   private peaks: { high: number; index: number }[] = [];
   private valleys: { low: number; index: number }[] = [];
 
+  /**
+   * Updates the pattern detector with new OHLCV data
+   * @param open - Opening price
+   * @param close - Closing price
+   * @param high - Highest price
+   * @param low - Lowest price
+   * @returns True if Inverted Three Buddha pattern is detected, false otherwise
+   */
   update(open: number, close: number, high: number, low: number): boolean {
     const bar = { open, close, high, low };
     this.bars.push(bar);
 
-    if (this.bars.length > 4) {
+    // Increased window size for better pattern detection
+    if (this.bars.length > 8) {
       this.bars.shift();
     }
 
-    if (this.bars.length < 4) {
+    if (this.bars.length < 8) {
       return false;
     }
 
@@ -893,19 +1364,31 @@ export class InvertedThreeBuddha {
     this.peaks = [];
     this.valleys = [];
 
-    // Find peaks and valleys
-    for (let i = 1; i < this.bars.length - 1; i++) {
+    // Find peaks and valleys with improved detection
+    for (let i = 2; i < this.bars.length - 2; i++) {
+      const prev2Bar = this.bars[i - 2]!;
       const prevBar = this.bars[i - 1]!;
       const currentBar = this.bars[i]!;
       const nextBar = this.bars[i + 1]!;
+      const next2Bar = this.bars[i + 2]!;
 
-      // Peak detection
-      if (currentBar.high > prevBar.high && currentBar.high > nextBar.high) {
+      // Peak detection: current high is higher than surrounding bars
+      if (
+        currentBar.high > prevBar.high &&
+        currentBar.high > nextBar.high &&
+        currentBar.high > prev2Bar.high &&
+        currentBar.high > next2Bar.high
+      ) {
         this.peaks.push({ high: currentBar.high, index: i });
       }
 
-      // Valley detection
-      if (currentBar.low < prevBar.low && currentBar.low < nextBar.low) {
+      // Valley detection: current low is lower than surrounding bars
+      if (
+        currentBar.low < prevBar.low &&
+        currentBar.low < nextBar.low &&
+        currentBar.low < prev2Bar.low &&
+        currentBar.low < next2Bar.low
+      ) {
         this.valleys.push({ low: currentBar.low, index: i });
       }
     }
@@ -934,14 +1417,23 @@ export class InvertedThreeBuddha {
       return false;
     }
 
-    // Fourth bar should close above neckline
+    // Latest bar should close above neckline
     const neckline = (peak1.high + peak2.high) / 2;
-    const bar4 = this.bars[3]!;
+    const latestBar = this.bars[this.bars.length - 1]!;
 
-    return bar4.close > neckline && bar4.low > valley2.low;
+    return latestBar.close > neckline && latestBar.low > valley2.low;
   }
 
+  /**
+   * Updates the pattern detector with a bar object
+   * @param bar - Bar object containing OHLC data
+   * @returns True if Inverted Three Buddha pattern is detected, false otherwise
+   */
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
+}
+
+export function useInvertedThreeBuddha() {
+  return new InvertedThreeBuddha();
 }

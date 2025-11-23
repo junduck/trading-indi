@@ -1,16 +1,10 @@
 import { OpRegistry } from "../src/flow/Registry.js";
 import { generateGraphSchemaPrompt } from "../src/agent/prompt.js";
-import {
-  regFoundation,
-  regArithmeticPrimitive,
-  regLogicalPrimitive,
-} from "../src/flow/RegistryUtils.js";
+import { regCoreOps } from "../src/flow/RegistryUtils.js";
 
 // Create registry with some operators
 const registry = new OpRegistry();
-regArithmeticPrimitive(registry);
-regLogicalPrimitive(registry);
-regFoundation(registry);
+regCoreOps(registry);
 
 // Generate prompt
 const prompt = generateGraphSchemaPrompt(

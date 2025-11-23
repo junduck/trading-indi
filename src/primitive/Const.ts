@@ -19,7 +19,7 @@ export class Const {
     type: "Const",
     desc: "Constant value source (no input required)",
     init: "{value: number}",
-    update: "",
+    input: "",
     output: "number",
   };
 }

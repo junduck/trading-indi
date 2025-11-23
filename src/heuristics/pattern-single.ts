@@ -18,7 +18,7 @@ export function isDoji(
 export class Doji {
   static readonly doc: OperatorDoc = {
     type: "Doji",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -55,7 +55,7 @@ export class LongLeggedDoji {
   static readonly doc: OperatorDoc = {
     type: "LongLeggedDoji",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -104,7 +104,7 @@ export function useLongLeggedDoji(opts?: PeriodWith<"period">) {
 export class DragonflyDoji {
   static readonly doc: OperatorDoc = {
     type: "DragonflyDoji",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -143,7 +143,7 @@ export function useDragonflyDoji() {
 export class GravestoneDoji {
   static readonly doc: OperatorDoc = {
     type: "GravestoneDoji",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -183,7 +183,7 @@ export class SpinningTop {
   static readonly doc: OperatorDoc = {
     type: "SpinningTop",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -233,7 +233,7 @@ export class MarubozuWhite {
   static readonly doc: OperatorDoc = {
     type: "MarubozuWhite",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -289,7 +289,7 @@ export class MarubozuBlack {
   static readonly doc: OperatorDoc = {
     type: "MarubozuBlack",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -345,7 +345,7 @@ export function useMarubozuBlack(opts?: PeriodWith<"period">) {
 export class Hammer {
   static readonly doc: OperatorDoc = {
     type: "Hammer",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -390,7 +390,7 @@ export function useHammer() {
 export class InvertedHammer {
   static readonly doc: OperatorDoc = {
     type: "InvertedHammer",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -435,7 +435,7 @@ export class HighWave {
   static readonly doc: OperatorDoc = {
     type: "HighWave",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 

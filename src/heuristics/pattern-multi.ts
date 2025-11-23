@@ -18,7 +18,7 @@ export class EveningStar {
   static readonly doc: OperatorDoc = {
     type: "EveningStar",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -100,7 +100,7 @@ export class MorningDojiStar {
   static readonly doc: OperatorDoc = {
     type: "MorningDojiStar",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -182,7 +182,7 @@ export class EveningDojiStar {
   static readonly doc: OperatorDoc = {
     type: "EveningDojiStar",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -263,7 +263,7 @@ export function useEveningDojiStar(opts?: PeriodWith<"period">) {
 export class AbandonedBabyBullish {
   static readonly doc: OperatorDoc = {
     type: "AbandonedBabyBullish",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -333,7 +333,7 @@ export function useAbandonedBabyBullish() {
 export class AbandonedBabyBearish {
   static readonly doc: OperatorDoc = {
     type: "AbandonedBabyBearish",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -403,7 +403,7 @@ export class ThreeWhiteSoldiers {
   static readonly doc: OperatorDoc = {
     type: "ThreeWhiteSoldiers",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -497,7 +497,7 @@ export class ThreeBlackCrows {
   static readonly doc: OperatorDoc = {
     type: "ThreeBlackCrows",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -591,7 +591,7 @@ export class ThreeBlackCrows {
 export class ThreeInsideUp {
   static readonly doc: OperatorDoc = {
     type: "ThreeInsideUp",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -659,7 +659,7 @@ export function useThreeInsideUp() {
 export class ThreeInsideDown {
   static readonly doc: OperatorDoc = {
     type: "ThreeInsideDown",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -727,7 +727,7 @@ export function useThreeInsideDown() {
 export class ThreeOutsideUp {
   static readonly doc: OperatorDoc = {
     type: "ThreeOutsideUp",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -799,7 +799,7 @@ export function useThreeOutsideUp() {
 export class ThreeOutsideDown {
   static readonly doc: OperatorDoc = {
     type: "ThreeOutsideDown",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -872,7 +872,7 @@ export class FakeyPatternBullish {
   static readonly doc: OperatorDoc = {
     type: "FakeyPatternBullish",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -954,7 +954,7 @@ export class FakeyPatternBearish {
   static readonly doc: OperatorDoc = {
     type: "FakeyPatternBearish",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -1038,7 +1038,7 @@ export class RisingThreeMethods {
   static readonly doc: OperatorDoc = {
     type: "RisingThreeMethods",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -1130,7 +1130,7 @@ export class FallingThreeMethods {
   static readonly doc: OperatorDoc = {
     type: "FallingThreeMethods",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -1223,7 +1223,7 @@ export function useFallingThreeMethods(opts?: PeriodWith<"period">) {
 export class ThreeBuddhaTop {
   static readonly doc: OperatorDoc = {
     type: "ThreeBuddhaTop",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -1331,7 +1331,7 @@ export class ThreeBuddhaTop {
 export class InvertedThreeBuddha {
   static readonly doc: OperatorDoc = {
     type: "InvertedThreeBuddha",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 

@@ -26,7 +26,7 @@ export class BOP {
 
   static readonly doc: OperatorDoc = {
     type: "BOP",
-    update: "open, high, low, close",
+    input: "open, high, low, close",
     output: "number",
   };
 }
@@ -68,7 +68,7 @@ export class MOM {
   static readonly doc: OperatorDoc = {
     type: "MOM",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -113,7 +113,7 @@ export class ROC {
     type: "ROC",
     desc: "Rate of Change",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -157,7 +157,7 @@ export class ROCR {
   static readonly doc: OperatorDoc = {
     type: "ROCR",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -223,7 +223,7 @@ export class RSI {
   static readonly doc: OperatorDoc = {
     type: "RSI",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -294,7 +294,7 @@ export class CMO {
   static readonly doc: OperatorDoc = {
     type: "CMO",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -341,7 +341,7 @@ export class WAD {
 
   static readonly doc: OperatorDoc = {
     type: "WAD",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -398,7 +398,7 @@ export class RVI {
   static readonly doc: OperatorDoc = {
     type: "RVI",
     init: "{period: number}",
-    update: "open, high, low, close",
+    input: "open, high, low, close",
     output: "{rvi, signal}",
   };
 }
@@ -479,7 +479,7 @@ export class TSI {
     type: "TSI",
     desc: "Trend Strength Index", // Agent: mistakes for True Strength Index
     init: "{period_fast?: number, period_slow?: number, period_signal?: number}",
-    update: "close",
+    input: "close",
     output: "{tsi, signal}",
   };
 }
@@ -534,7 +534,7 @@ export class BBPOWER {
     type: "BBPOWER",
     desc: "Elder's Bull/Bear Power", // Agent: mistakes for Bollinger Bands Power
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{bull_power, bear_power}",
   };
 }

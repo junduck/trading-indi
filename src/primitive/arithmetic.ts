@@ -11,7 +11,7 @@ export class Add {
 
   static readonly doc: OperatorDoc = {
     type: "Add",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -23,7 +23,7 @@ export class Sub {
 
   static readonly doc: OperatorDoc = {
     type: "Sub",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -35,7 +35,7 @@ export class Mul {
 
   static readonly doc: OperatorDoc = {
     type: "Mul",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -49,7 +49,7 @@ export class Div {
   static readonly doc: OperatorDoc = {
     type: "Div",
     desc: "Division",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -62,7 +62,7 @@ export class Mod {
   static readonly doc: OperatorDoc = {
     type: "Mod",
     desc: "Modulo",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -74,7 +74,7 @@ export class Pow {
 
   static readonly doc: OperatorDoc = {
     type: "Pow",
-    update: "base, exp",
+    input: "base, exp",
     output: "number",
   };
 }
@@ -86,7 +86,7 @@ export class Min {
 
   static readonly doc: OperatorDoc = {
     type: "Min",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -98,7 +98,7 @@ export class Max {
 
   static readonly doc: OperatorDoc = {
     type: "Max",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "number",
   };
 }
@@ -114,7 +114,7 @@ export class Negate {
 
   static readonly doc: OperatorDoc = {
     type: "Negate",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -126,7 +126,7 @@ export class Abs {
 
   static readonly doc: OperatorDoc = {
     type: "Abs",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -138,7 +138,7 @@ export class Sign {
 
   static readonly doc: OperatorDoc = {
     type: "Sign",
-    update: "x",
+    input: "x",
     output: "-1, 0, 1",
   };
 }
@@ -150,7 +150,7 @@ export class Floor {
 
   static readonly doc: OperatorDoc = {
     type: "Floor",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -162,7 +162,7 @@ export class Ceil {
 
   static readonly doc: OperatorDoc = {
     type: "Ceil",
-    update: "x: number",
+    input: "x: number",
     output: "number",
   };
 }
@@ -174,7 +174,7 @@ export class Round {
 
   static readonly doc: OperatorDoc = {
     type: "Round",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -186,7 +186,7 @@ export class Sqrt {
 
   static readonly doc: OperatorDoc = {
     type: "Sqrt",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -199,7 +199,7 @@ export class Log {
   static readonly doc: OperatorDoc = {
     type: "Log",
     desc: "Natural logarithm",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -211,7 +211,7 @@ export class Exp {
 
   static readonly doc: OperatorDoc = {
     type: "Exp",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -223,7 +223,7 @@ export class Log1p {
 
   static readonly doc: OperatorDoc = {
     type: "Log1p",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -235,7 +235,7 @@ export class Expm1 {
 
   static readonly doc: OperatorDoc = {
     type: "Expm1",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -247,7 +247,7 @@ export class Reciprocal {
 
   static readonly doc: OperatorDoc = {
     type: "Reciprocal",
-    update: "x",
+    input: "x",
     output: "number",
   };
 }
@@ -259,7 +259,7 @@ export class Clamp {
 
   static readonly doc: OperatorDoc = {
     type: "Clamp",
-    update: "x, min, max",
+    input: "x, min, max",
     output: "number",
   };
 }
@@ -271,7 +271,7 @@ export class Lerp {
 
   static readonly doc: OperatorDoc = {
     type: "Lerp",
-    update: "a, b, t",
+    input: "a, b, t",
     output: "number",
   };
 }
@@ -283,7 +283,7 @@ export class InvLerp {
 
   static readonly doc: OperatorDoc = {
     type: "InvLerp",
-    update: "a, b, v",
+    input: "a, b, v",
     output: "number",
   };
 }
@@ -301,7 +301,7 @@ export class SumOf {
 
   static readonly doc: OperatorDoc = {
     type: "SumOf",
-    update: "...inputs: number[]",
+    input: "...inputs: number[]",
     output: "number",
   };
 }
@@ -315,7 +315,7 @@ export class ProdOf {
 
   static readonly doc: OperatorDoc = {
     type: "ProdOf",
-    update: "...inputs: number[]",
+    input: "...inputs: number[]",
     output: "number",
   };
 }
@@ -330,7 +330,7 @@ export class AvgOf {
 
   static readonly doc: OperatorDoc = {
     type: "AvgOf",
-    update: "...inputs: number[]",
+    input: "...inputs: number[]",
     output: "number",
   };
 }
@@ -342,7 +342,7 @@ export class MinOf {
 
   static readonly doc: OperatorDoc = {
     type: "MinOf",
-    update: "...inputs: number[]",
+    input: "...inputs: number[]",
     output: "number",
   };
 }
@@ -354,7 +354,7 @@ export class MaxOf {
 
   static readonly doc: OperatorDoc = {
     type: "MaxOf",
-    update: "...inputs: number[]",
+    input: "...inputs: number[]",
     output: "number",
   };
 }
@@ -371,7 +371,7 @@ export class RelDist {
   static readonly doc: OperatorDoc = {
     type: "RelDist",
     desc: "abs(a-b)/abs(b)",
-    update: "a, b",
+    input: "a, b",
     output: "number",
   };
 }

@@ -78,7 +78,7 @@ describe("Const", () => {
           name: "const",
           type: "Const",
           init: { value: 100 },
-          updateSource: [],
+          inputSrc: [],
         },
       ],
     };
@@ -90,7 +90,10 @@ describe("Const", () => {
   });
 
   it("should work in complex graphs with mixed dependencies", () => {
-    const registry = new OpRegistry().register(Const).register(Mul).register(Add);
+    const registry = new OpRegistry()
+      .register(Const)
+      .register(Mul)
+      .register(Add);
 
     const descriptor: GraphSchema = {
       root: "tick",
@@ -99,23 +102,23 @@ describe("Const", () => {
           name: "multiplier",
           type: "Const",
           init: { value: 2 },
-          updateSource: [],
+          inputSrc: [],
         },
         {
           name: "offset",
           type: "Const",
           init: { value: 10 },
-          updateSource: [],
+          inputSrc: [],
         },
         {
           name: "scaled",
           type: "Mul",
-          updateSource: ["tick", "multiplier"],
+          inputSrc: ["tick", "multiplier"],
         },
         {
           name: "result",
           type: "Add",
-          updateSource: ["scaled", "offset"],
+          inputSrc: ["scaled", "offset"],
         },
       ],
     };
@@ -178,7 +181,7 @@ describe("Const", () => {
     expect(out.zero).toBe(0);
   });
 
-  it("should work with JSON schema when updateSource is omitted", () => {
+  it("should work with JSON schema when inputSrc is omitted", () => {
     const registry = new OpRegistry().register(Const);
 
     const descriptor: GraphSchema = {
@@ -198,7 +201,7 @@ describe("Const", () => {
     expect(out.const).toBe(100);
   });
 
-  it("should work with JSON schema when updateSource is empty string", () => {
+  it("should work with JSON schema when inputSrc is empty string", () => {
     const registry = new OpRegistry().register(Const);
 
     const descriptor: GraphSchema = {
@@ -208,7 +211,7 @@ describe("Const", () => {
           name: "const",
           type: "Const",
           init: { value: 100 },
-          updateSource: "",
+          inputSrc: "",
         },
       ],
     } as any;

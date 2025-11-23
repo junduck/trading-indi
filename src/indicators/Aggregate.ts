@@ -35,7 +35,11 @@ export class OHLCV {
    * @param volume Tick volume
    * @returns Completed OHLCV bar or undefined if bar still in progress
    */
-  update(timestamp: number, price: number, volume: number): OHLCVBar | undefined {
+  update(
+    timestamp: number,
+    price: number,
+    volume: number
+  ): OHLCVBar | undefined {
     if (!this.currentBar || !this.intervalStart) {
       // First tick - initialize new bar
       this.intervalStart = this.alignTimestamp(timestamp);
@@ -111,7 +115,7 @@ export class OHLCV {
     type: "OHLCV",
     desc: "Time-based OHLCV candle aggregator",
     init: "{intervalMs: number}",
-    update: "timestamp, price, volume",
+    input: "timestamp, price, volume",
     output: "{timestamp, open, high, low, close, volume} | undefined",
   };
 }

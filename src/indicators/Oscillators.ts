@@ -28,7 +28,7 @@ export class AO {
 
   static readonly doc: OperatorDoc = {
     type: "AO",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -66,7 +66,7 @@ export class APO {
   static readonly doc: OperatorDoc = {
     type: "APO",
     init: "{period_fast, period_slow}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -115,7 +115,7 @@ export class DPO {
   static readonly doc: OperatorDoc = {
     type: "DPO",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -171,7 +171,7 @@ export class Fisher {
   static readonly doc: OperatorDoc = {
     type: "Fisher",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -223,7 +223,7 @@ export class MACD {
   static readonly doc: OperatorDoc = {
     type: "MACD",
     init: "{period_fast, period_slow, period_signal}",
-    update: "close",
+    input: "close",
     output: "{macd, signal, histogram}",
   };
 }
@@ -272,7 +272,7 @@ export class PPO {
   static readonly doc: OperatorDoc = {
     type: "PPO",
     init: "{period_fast, period_slow}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -312,7 +312,7 @@ export class QSTICK {
   static readonly doc: OperatorDoc = {
     type: "QSTICK",
     init: "{period: number}",
-    update: "open, close",
+    input: "open, close",
     output: "number",
   };
 }
@@ -367,7 +367,7 @@ export class TRIX {
   static readonly doc: OperatorDoc = {
     type: "TRIX",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -440,7 +440,7 @@ export class ULTOSC {
   static readonly doc: OperatorDoc = {
     type: "ULTOSC",
     init: "{period_fast, period_med, period_slow}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }

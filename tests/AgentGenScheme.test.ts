@@ -46,7 +46,7 @@ describe("Agent Generated Schema", () => {
       volume: 1000,
     });
 
-    // Verify Const nodes work correctly (they have missing/empty updateSource)
+    // Verify Const nodes work correctly (they have missing/empty inputSrc)
     expect(output.one).toBe(1.0);
     expect(output.hundred).toBe(100.0);
     expect(output.neg_hundred).toBe(-100.0);

@@ -63,7 +63,7 @@ export class STOCH {
   static readonly doc: OperatorDoc = {
     type: "STOCH",
     init: "{k_period?, k_slowing?, d_period?}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{k, d}",
   };
 }
@@ -119,7 +119,7 @@ export class STOCHRSI {
   static readonly doc: OperatorDoc = {
     type: "STOCHRSI",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -169,7 +169,7 @@ export class WILLR {
     type: "WILLR",
     desc: "Williams %R",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }

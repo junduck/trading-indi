@@ -10,7 +10,7 @@ import { isDoji } from "./pattern-single.js";
 export class BearishEngulfing {
   static readonly doc: OperatorDoc = {
     type: "BearishEngulfing",
-    update: "open, close",
+    input: "open, close",
     output: "boolean",
   };
 
@@ -58,7 +58,7 @@ export function useBearishEngulfing() {
 export class BullishHarami {
   static readonly doc: OperatorDoc = {
     type: "BullishHarami",
-    update: "open, close",
+    input: "open, close",
     output: "boolean",
   };
 
@@ -106,7 +106,7 @@ export function useBullishHarami() {
 export class BearishHarami {
   static readonly doc: OperatorDoc = {
     type: "BearishHarami",
-    update: "open, close",
+    input: "open, close",
     output: "boolean",
   };
 
@@ -154,7 +154,7 @@ export function useBearishHarami() {
 export class HaramiCross {
   static readonly doc: OperatorDoc = {
     type: "HaramiCross",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -203,7 +203,7 @@ export function useHaramiCross() {
 export class PiercingPattern {
   static readonly doc: OperatorDoc = {
     type: "PiercingPattern",
-    update: "open, close",
+    input: "open, close",
     output: "boolean",
   };
 
@@ -254,7 +254,7 @@ export function usePiercingPattern() {
 export class DarkCloudCover {
   static readonly doc: OperatorDoc = {
     type: "DarkCloudCover",
-    update: "open, close",
+    input: "open, close",
     output: "boolean",
   };
 
@@ -384,7 +384,7 @@ export class TweezerBottoms {
 export class BullishDojiStar {
   static readonly doc: OperatorDoc = {
     type: "BullishDojiStar",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -433,7 +433,7 @@ export function useBullishDojiStar() {
 export class BearishDojiStar {
   static readonly doc: OperatorDoc = {
     type: "BearishDojiStar",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -482,7 +482,7 @@ export function useBearishDojiStar() {
 export class InsideBar {
   static readonly doc: OperatorDoc = {
     type: "InsideBar",
-    update: "high, low",
+    input: "high, low",
     output: "boolean",
   };
 
@@ -526,7 +526,7 @@ export function useInsideBar() {
 export class OutsideBar {
   static readonly doc: OperatorDoc = {
     type: "OutsideBar",
-    update: "high, low",
+    input: "high, low",
     output: "boolean",
   };
 
@@ -570,7 +570,7 @@ export function useOutsideBar() {
 export class RailroadTracks {
   static readonly doc: OperatorDoc = {
     type: "RailroadTracks",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -622,7 +622,7 @@ export class RisingWindow {
   static readonly doc: OperatorDoc = {
     type: "RisingWindow",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 
@@ -679,7 +679,7 @@ export class FallingWindow {
   static readonly doc: OperatorDoc = {
     type: "FallingWindow",
     init: "{period?: number}",
-    update: "open, close, high, low",
+    input: "open, close, high, low",
     output: "boolean",
   };
 

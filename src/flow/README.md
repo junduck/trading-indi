@@ -58,13 +58,13 @@ const config: GraphSchema = {
       name: "ema",
       type: "EMA",
       init: { period: 20 },
-      updateSource: ["tick.price"]
+      inputSrc: ["tick.price"]
     },
     {
       name: "sma",
       type: "SMA",
       init: { period: 20 },
-      updateSource: ["tick.price"]
+      inputSrc: ["tick.price"]
     }
   ]
 };
@@ -86,7 +86,7 @@ Access nested properties using dot notation:
   "name": "ema",
   "type": "EMA",
   "init": { "period": 20 },
-  "updateSource": ["tick.price"]
+  "inputSrc": ["tick.price"]
 }
 ```
 
@@ -98,7 +98,7 @@ Operators can depend on multiple upstream nodes:
 {
   "name": "diff",
   "type": "Subtract",
-  "updateSource": ["fast", "slow"]
+  "inputSrc": ["fast", "slow"]
 }
 ```
 
@@ -193,7 +193,7 @@ interface OpSchema {
   name: string;           // Node name in graph
   type: string;           // Type name in registry
   init?: any;             // Constructor parameters
-  updateSource: string[]; // Input dependency paths
+  inputSrc: string[]; // Input dependency paths
 }
 ```
 
@@ -228,24 +228,24 @@ interface GraphSchema {
       "name": "fast",
       "type": "EMA",
       "init": { "period": 12 },
-      "updateSource": ["tick.price"]
+      "inputSrc": ["tick.price"]
     },
     {
       "name": "slow",
       "type": "EMA",
       "init": { "period": 26 },
-      "updateSource": ["tick.price"]
+      "inputSrc": ["tick.price"]
     },
     {
       "name": "macd",
       "type": "Subtract",
-      "updateSource": ["fast", "slow"]
+      "inputSrc": ["fast", "slow"]
     },
     {
       "name": "signal",
       "type": "EMA",
       "init": { "period": 9 },
-      "updateSource": ["macd"]
+      "inputSrc": ["macd"]
     }
   ]
 }
@@ -284,7 +284,7 @@ Then use it in your DAG:
 {
   "name": "signal",
   "type": "CrossOver",
-  "updateSource": ["fast", "slow"]
+  "inputSrc": ["fast", "slow"]
 }
 ```
 

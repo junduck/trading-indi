@@ -10,7 +10,7 @@ export const OpSchemaZod = z.object({
   name: z.string().min(1, "Node name must be non-empty"),
   type: z.string().min(1, "Node type must be non-empty"),
   init: z.unknown().optional(),
-  updateSource: z.union([z.array(z.string()), z.string()]).optional(),
+  inputSrc: z.union([z.array(z.string()), z.string()]).optional(),
 });
 
 /**
@@ -48,7 +48,7 @@ export interface GraphSchemaValidationResult {
 }
 
 /**
- * Normalize updateSource to string array. Handles undefined, empty string, and Const nodes.
+ * Normalize inputSrc to string array. Handles undefined, empty string, and Const nodes.
  */
 export function normalizeUpdateSource(source?: string[] | string): string[] {
   if (!source || source === "") return [];
@@ -68,7 +68,7 @@ function buildSuccessorMap(schema: GraphSchema): Map<string, string[]> {
   }
 
   for (const node of schema.nodes) {
-    const sources = normalizeUpdateSource(node.updateSource);
+    const sources = normalizeUpdateSource(node.inputSrc);
     if (sources.length === 0) {
       // Nodes with no inputs (e.g., Const) depend on root
       const rootSuccs = succ.get(schema.root)!;
@@ -163,7 +163,7 @@ export function formatValidationError(error: GraphError): string {
  */
 export function graphComplexity(desc: GraphSchema): number {
   const edgeCount = desc.nodes.reduce(
-    (sum, node) => sum + normalizeUpdateSource(node.updateSource).length,
+    (sum, node) => sum + normalizeUpdateSource(node.inputSrc).length,
     0
   );
   return desc.nodes.length + edgeCount;
@@ -246,11 +246,11 @@ export function graphDiff(
       });
     }
 
-    const beforeInputs = normalizeUpdateSource(beforeNode.updateSource)
+    const beforeInputs = normalizeUpdateSource(beforeNode.inputSrc)
       .slice()
       .sort()
       .join(",");
-    const afterInputs = normalizeUpdateSource(afterNode.updateSource)
+    const afterInputs = normalizeUpdateSource(afterNode.inputSrc)
       .slice()
       .sort()
       .join(",");
@@ -258,8 +258,8 @@ export function graphDiff(
       diffs.push({
         kind: "node_input_changed",
         node: name,
-        before: normalizeUpdateSource(beforeNode.updateSource),
-        after: normalizeUpdateSource(afterNode.updateSource),
+        before: normalizeUpdateSource(beforeNode.inputSrc),
+        after: normalizeUpdateSource(afterNode.inputSrc),
       });
     }
   }

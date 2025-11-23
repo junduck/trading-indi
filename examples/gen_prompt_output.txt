@@ -523,7 +523,7 @@ Generate a JSON object with this structure:
       "name": string,         // Unique node identifier
       "type": string,         // Operator type from available operators
       "init": object,         // Constructor parameters (optional)
-      "updateSource": string[] // Input paths (e.g., ["tick"], ["fast", "slow"], ["tick.close"])
+      "inputSrc": string[] // Input paths (e.g., ["tick"], ["fast", "slow"], ["tick.close"])
     }
   ]
 }
@@ -534,7 +534,7 @@ Generate a JSON object with this structure:
 1. **Root node**: External data entry point, typically "tick" or "price"
 2. **Input paths**: Reference nodes by name or path (e.g., "ema", "tick.close" for access nested fields)
 3. **No cycles**: DAG structure required
-4. **Match parameters**: Each node's updateSource must match its operator's update arity
+4. **Match parameters**: Each node's inputSrc must match its operator's update arity
 
 ## Examples
 
@@ -548,7 +548,7 @@ root data event: {price: number, volume: number}
       "name": "ema",
       "type": "EMA",
       "init": {"period": 20},
-      "updateSource": ["tick.price"]
+      "inputSrc": ["tick.price"]
     }
   ]
 }
@@ -564,18 +564,18 @@ root data event: number
       "name": "fast",
       "type": "EMA",
       "init": {"period": 12},
-      "updateSource": ["price"]
+      "inputSrc": ["price"]
     },
     {
       "name": "slow",
       "type": "EMA",
       "init": {"period": 26},
-      "updateSource": ["price"]
+      "inputSrc": ["price"]
     },
     {
       "name": "macd",
       "type": "Sub",
-      "updateSource": ["fast", "slow"]
+      "inputSrc": ["fast", "slow"]
     }
   ]
 }

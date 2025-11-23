@@ -46,7 +46,7 @@ export class Volatility {
   static readonly doc: OperatorDoc = {
     type: "Volatility",
     init: "{period, annualizedDays?}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -94,7 +94,7 @@ export class CVI {
   static readonly doc: OperatorDoc = {
     type: "CVI",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -150,7 +150,7 @@ export class MASS {
   static readonly doc: OperatorDoc = {
     type: "MASS",
     init: "{period?: number}",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -193,7 +193,7 @@ export class TR {
 
   static readonly doc: OperatorDoc = {
     type: "TR",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -231,7 +231,7 @@ export class ATR {
   static readonly doc: OperatorDoc = {
     type: "ATR",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -270,7 +270,7 @@ export class NATR {
   static readonly doc: OperatorDoc = {
     type: "NATR",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -313,7 +313,7 @@ export class PriceChannel {
   static readonly doc: OperatorDoc = {
     type: "PriceChannel",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "{upper, lower}",
   };
 }
@@ -368,7 +368,7 @@ export class BBANDS {
   static readonly doc: OperatorDoc = {
     type: "BBANDS",
     init: "{period, Nstddev?}",
-    update: "close",
+    input: "close",
     output: "{upper, middle, lower}",
   };
 }
@@ -434,7 +434,7 @@ export class KC {
   static readonly doc: OperatorDoc = {
     type: "KC",
     init: "{period, multiplier?}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{upper, middle, lower}",
   };
 }
@@ -493,7 +493,7 @@ export class DC {
   static readonly doc: OperatorDoc = {
     type: "DC",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "{upper, middle, lower}",
   };
 }

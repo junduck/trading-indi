@@ -11,7 +11,7 @@ export class LT {
 
   static readonly doc: OperatorDoc = {
     type: "LT",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -23,7 +23,7 @@ export class GT {
 
   static readonly doc: OperatorDoc = {
     type: "GT",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -35,7 +35,7 @@ export class LTE {
 
   static readonly doc: OperatorDoc = {
     type: "LTE",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -47,7 +47,7 @@ export class GTE {
 
   static readonly doc: OperatorDoc = {
     type: "GTE",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -59,7 +59,7 @@ export class EQ {
 
   static readonly doc: OperatorDoc = {
     type: "EQ",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -71,7 +71,7 @@ export class NEQ {
 
   static readonly doc: OperatorDoc = {
     type: "NEQ",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -88,7 +88,7 @@ export class Between {
   static readonly doc: OperatorDoc = {
     type: "Between",
     desc: "lo <= x <= hi",
-    update: "x, lo, hi",
+    input: "x, lo, hi",
     output: "boolean",
   };
 }
@@ -101,7 +101,7 @@ export class Outside {
   static readonly doc: OperatorDoc = {
     type: "Outside",
     desc: "x < lo || x > hi",
-    update: "x, lo, hi",
+    input: "x, lo, hi",
     output: "boolean",
   };
 }
@@ -117,7 +117,7 @@ export class And {
 
   static readonly doc: OperatorDoc = {
     type: "And",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -129,7 +129,7 @@ export class Or {
 
   static readonly doc: OperatorDoc = {
     type: "Or",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -141,7 +141,7 @@ export class Not {
 
   static readonly doc: OperatorDoc = {
     type: "Not",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -153,7 +153,7 @@ export class Xor {
 
   static readonly doc: OperatorDoc = {
     type: "Xor",
-    update: "lhs, rhs",
+    input: "lhs, rhs",
     output: "boolean",
   };
 }
@@ -170,7 +170,7 @@ export class AllOf {
 
   static readonly doc: OperatorDoc = {
     type: "AllOf",
-    update: "...inputs: boolean[]",
+    input: "...inputs: boolean[]",
     output: "boolean",
   };
 }
@@ -183,7 +183,7 @@ export class AnyOf {
 
   static readonly doc: OperatorDoc = {
     type: "AnyOf",
-    update: "...inputs: boolean[]",
+    input: "...inputs: boolean[]",
     output: "boolean",
   };
 }
@@ -196,7 +196,7 @@ export class NoneOf {
 
   static readonly doc: OperatorDoc = {
     type: "NoneOf",
-    update: "...inputs: boolean[]",
+    input: "...inputs: boolean[]",
     output: "boolean",
   };
 }
@@ -212,7 +212,7 @@ export class IsNaN {
 
   static readonly doc: OperatorDoc = {
     type: "IsNaN",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -224,7 +224,7 @@ export class IsFinite {
 
   static readonly doc: OperatorDoc = {
     type: "IsFinite",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -236,7 +236,7 @@ export class IsPositive {
 
   static readonly doc: OperatorDoc = {
     type: "IsPositive",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -248,7 +248,7 @@ export class IsNegative {
 
   static readonly doc: OperatorDoc = {
     type: "IsNegative",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -260,7 +260,7 @@ export class IsZero {
 
   static readonly doc: OperatorDoc = {
     type: "IsZero",
-    update: "x",
+    input: "x",
     output: "boolean",
   };
 }
@@ -276,7 +276,7 @@ export class IfThenElse {
 
   static readonly doc: OperatorDoc = {
     type: "IfThenElse",
-    update: "cond, thenVal, elseVal",
+    input: "cond, thenVal, elseVal",
     output: "thenVal | elseVal",
   };
 }
@@ -288,7 +288,7 @@ export class Gate {
 
   static readonly doc: OperatorDoc = {
     type: "Gate",
-    update: "cond, val",
+    input: "cond, val",
     output: "val | undefined",
   };
 }
@@ -301,7 +301,7 @@ export class Coalesce {
 
   static readonly doc: OperatorDoc = {
     type: "Coalesce",
-    update: "...inputs",
+    input: "...inputs",
     output: "first non-null",
   };
 }

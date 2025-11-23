@@ -48,7 +48,7 @@ export class AROON {
   static readonly doc: OperatorDoc = {
     type: "AROON",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "{up, down}",
   };
 }
@@ -91,7 +91,7 @@ export class AROONOSC {
   static readonly doc: OperatorDoc = {
     type: "AROONOSC",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -138,7 +138,7 @@ export class CCI {
   static readonly doc: OperatorDoc = {
     type: "CCI",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -193,7 +193,7 @@ export class VHF {
   static readonly doc: OperatorDoc = {
     type: "VHF",
     init: "{period: number}",
-    update: "close",
+    input: "close",
     output: "number",
   };
 }
@@ -263,7 +263,7 @@ export class DM {
   static readonly doc: OperatorDoc = {
     type: "DM",
     init: "{period: number}",
-    update: "high, low",
+    input: "high, low",
     output: "{plus, minus}",
   };
 }
@@ -321,7 +321,7 @@ export class DI {
   static readonly doc: OperatorDoc = {
     type: "DI",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{plus, minus}",
   };
 }
@@ -371,7 +371,7 @@ export class DX {
   static readonly doc: OperatorDoc = {
     type: "DX",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -413,7 +413,7 @@ export class ADX {
   static readonly doc: OperatorDoc = {
     type: "ADX",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -462,7 +462,7 @@ export class ADXR {
   static readonly doc: OperatorDoc = {
     type: "ADXR",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "number",
   };
 }
@@ -576,7 +576,7 @@ export class SAR {
   static readonly doc: OperatorDoc = {
     type: "SAR",
     init: "{acceleration?, maximum?}",
-    update: "high, low",
+    input: "high, low",
     output: "number",
   };
 }
@@ -656,7 +656,7 @@ export class VI {
   static readonly doc: OperatorDoc = {
     type: "VI",
     init: "{period: number}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{vi_plus, vi_minus}",
   };
 }
@@ -750,7 +750,7 @@ export class ICHIMOKU {
   static readonly doc: OperatorDoc = {
     type: "ICHIMOKU",
     init: "{tenkan_period?, kijun_period?, senkou_b_period?, displacement?}",
-    update: "high, low, close",
+    input: "high, low, close",
     output: "{tenkan, kijun, senkou_a, senkou_b, chikou}",
   };
 }

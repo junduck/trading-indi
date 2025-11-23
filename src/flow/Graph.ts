@@ -74,7 +74,7 @@ export class Graph {
     for (const nodeDesc of schema.nodes) {
       const ctor = registry.get(nodeDesc.type)!;
       const instance = new ctor(nodeDesc.init ?? {});
-      const sources = normalizeUpdateSource(nodeDesc.updateSource);
+      const sources = normalizeUpdateSource(nodeDesc.inputSrc);
       const node = new OpAdapter(instance, sources);
       graph.addNode(nodeDesc.name, node);
     }

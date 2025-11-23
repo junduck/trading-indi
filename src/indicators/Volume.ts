@@ -30,7 +30,7 @@ export class AD {
 
   static readonly doc: OperatorDoc = {
     type: "AD",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -72,7 +72,7 @@ export class ADOSC {
   static readonly doc: OperatorDoc = {
     type: "ADOSC",
     init: "{period_fast, period_slow}",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -128,7 +128,9 @@ export class KVO {
     this.prevHLC = hlc;
 
     const vf =
-      this.cm > 0 ? 100 * volume * this.trend * Math.abs((2 * dm) / this.cm - 1) : 0;
+      this.cm > 0
+        ? 100 * volume * this.trend * Math.abs((2 * dm) / this.cm - 1)
+        : 0;
 
     const fastVF = this.fastEMA.update(vf);
     const slowVF = this.slowEMA.update(vf);
@@ -143,7 +145,7 @@ export class KVO {
   static readonly doc: OperatorDoc = {
     type: "KVO",
     init: "{period_fast, period_slow}",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -192,7 +194,7 @@ export class NVI {
 
   static readonly doc: OperatorDoc = {
     type: "NVI",
-    update: "close, volume",
+    input: "close, volume",
     output: "number",
   };
 }
@@ -236,7 +238,7 @@ export class OBV {
 
   static readonly doc: OperatorDoc = {
     type: "OBV",
-    update: "close, volume",
+    input: "close, volume",
     output: "number",
   };
 }
@@ -282,7 +284,7 @@ export class PVI {
 
   static readonly doc: OperatorDoc = {
     type: "PVI",
-    update: "close, volume",
+    input: "close, volume",
     output: "number",
   };
 }
@@ -358,7 +360,7 @@ export class MFI {
   static readonly doc: OperatorDoc = {
     type: "MFI",
     init: "{period: number}",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -402,7 +404,7 @@ export class EMV {
 
   static readonly doc: OperatorDoc = {
     type: "EMV",
-    update: "high, low, volume",
+    input: "high, low, volume",
     output: "number",
   };
 }
@@ -432,7 +434,7 @@ export class MarketFI {
   static readonly doc: OperatorDoc = {
     type: "MarketFI",
     desc: "Market Facilitation Index", // Agent: mistakes for Market Finance Index
-    update: "high, low, volume",
+    input: "high, low, volume",
     output: "number",
   };
 }
@@ -464,7 +466,9 @@ export class VOSC {
   update(volume: number): number {
     const emsFastVal = this.emsFast.update(volume);
     const emsSlowVal = this.emsSlow.update(volume);
-    return emsSlowVal !== 0 ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100 : 0;
+    return emsSlowVal !== 0
+      ? ((emsFastVal - emsSlowVal) / emsSlowVal) * 100
+      : 0;
   }
 
   onData(bar: BarWith<"volume">): number {
@@ -474,7 +478,7 @@ export class VOSC {
   static readonly doc: OperatorDoc = {
     type: "VOSC",
     init: "{period_fast, period_slow}",
-    update: "volume",
+    input: "volume",
     output: "number",
   };
 }
@@ -522,7 +526,7 @@ export class CMF {
   static readonly doc: OperatorDoc = {
     type: "CMF",
     init: "{period: number}",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -566,7 +570,7 @@ export class CHO {
   static readonly doc: OperatorDoc = {
     type: "CHO",
     init: "{period_fast, period_slow}",
-    update: "high, low, close, volume",
+    input: "high, low, close, volume",
     output: "number",
   };
 }
@@ -624,7 +628,7 @@ export class PVO {
   static readonly doc: OperatorDoc = {
     type: "PVO",
     init: "{period_fast, period_slow, period_signal?}",
-    update: "volume",
+    input: "volume",
     output: "{pvo, signal, histogram}",
   };
 }
@@ -675,7 +679,7 @@ export class FI {
   static readonly doc: OperatorDoc = {
     type: "FI",
     init: "{period: number}",
-    update: "close, volume",
+    input: "close, volume",
     output: "number",
   };
 }
@@ -721,7 +725,7 @@ export class VROC {
   static readonly doc: OperatorDoc = {
     type: "VROC",
     init: "{period: number}",
-    update: "volume",
+    input: "volume",
     output: "number",
   };
 }
@@ -765,7 +769,7 @@ export class PVT {
 
   static readonly doc: OperatorDoc = {
     type: "PVT",
-    update: "close, volume",
+    input: "close, volume",
     output: "number",
   };
 }

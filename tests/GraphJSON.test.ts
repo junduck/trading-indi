@@ -14,7 +14,7 @@ describe("Graph JSON Serialization", () => {
           name: "ema",
           type: "EMA",
           init: { period: 2 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
       ],
     };
@@ -40,13 +40,13 @@ describe("Graph JSON Serialization", () => {
           name: "fast",
           type: "EMA",
           init: { period: 2 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
         {
           name: "slow",
           type: "EMA",
           init: { period: 3 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
       ],
     };
@@ -72,7 +72,7 @@ describe("Graph JSON Serialization", () => {
           name: "ema",
           type: "EMA",
           init: { period: 2 },
-          updateSource: ["tick.price"],
+          inputSrc: ["tick.price"],
         },
       ],
     };
@@ -91,7 +91,7 @@ describe("Graph JSON Serialization", () => {
     class Subtract {
       static readonly doc: OperatorDoc = {
         type: "Subtract",
-        update: "a: number, b: number",
+        input: "a: number, b: number",
         output: "number",
       };
 
@@ -109,18 +109,18 @@ describe("Graph JSON Serialization", () => {
           name: "fast",
           type: "EMA",
           init: { period: 2 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
         {
           name: "slow",
           type: "EMA",
           init: { period: 3 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
         {
           name: "diff",
           type: "Subtract",
-          updateSource: ["fast", "slow"],
+          inputSrc: ["fast", "slow"],
         },
       ],
     };
@@ -144,7 +144,7 @@ describe("Graph JSON Serialization", () => {
           name: "ema",
           type: "UnknownIndicator",
           init: { period: 2 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
       ],
     };
@@ -158,7 +158,7 @@ describe("Graph JSON Serialization", () => {
     class Identity {
       static readonly doc: OperatorDoc = {
         type: "Identity",
-        update: "x: number",
+        input: "x: number",
         output: "number",
       };
 
@@ -175,7 +175,7 @@ describe("Graph JSON Serialization", () => {
         {
           name: "identity",
           type: "Identity",
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
       ],
     };
@@ -190,7 +190,7 @@ describe("Graph JSON Serialization", () => {
     class Multiply {
       static readonly doc: OperatorDoc = {
         type: "Multiply",
-        update: "a: number, b: number",
+        input: "a: number, b: number",
         output: "number",
       };
 
@@ -202,7 +202,7 @@ describe("Graph JSON Serialization", () => {
     class Subtract {
       static readonly doc: OperatorDoc = {
         type: "Subtract",
-        update: "a: number, b: number",
+        input: "a: number, b: number",
         output: "number",
       };
 
@@ -223,23 +223,23 @@ describe("Graph JSON Serialization", () => {
           name: "fast",
           type: "EMA",
           init: { period: 2 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
         {
           name: "slow",
           type: "EMA",
           init: { period: 3 },
-          updateSource: ["tick"],
+          inputSrc: ["tick"],
         },
         {
           name: "diff",
           type: "Subtract",
-          updateSource: ["fast", "slow"],
+          inputSrc: ["fast", "slow"],
         },
         {
           name: "signal",
           type: "Multiply",
-          updateSource: ["diff", "fast"],
+          inputSrc: ["diff", "fast"],
         },
       ],
     };

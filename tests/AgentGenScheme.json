@@ -4,35 +4,35 @@
     {
       "name": "returns",
       "type": "Sub",
-      "updateSource": ["tick.close", "prev_close"]
+      "inputSrc": ["tick.close", "prev_close"]
     },
     {
       "name": "prev_close",
       "type": "EMA",
       "init": { "alpha": 1.0 },
-      "updateSource": ["tick.close"]
+      "inputSrc": ["tick.close"]
     },
     {
       "name": "short_vol",
       "type": "RollingStddevEW",
       "init": { "period": 10 },
-      "updateSource": ["returns"]
+      "inputSrc": ["returns"]
     },
     {
       "name": "long_vol",
       "type": "RollingStddevEW",
       "init": { "period": 50 },
-      "updateSource": ["returns"]
+      "inputSrc": ["returns"]
     },
     {
       "name": "vol_ratio",
       "type": "Div",
-      "updateSource": ["short_vol.stddev", "long_vol.stddev"]
+      "inputSrc": ["short_vol.stddev", "long_vol.stddev"]
     },
     {
       "name": "vol_shift",
       "type": "Sub",
-      "updateSource": ["vol_ratio", "one"]
+      "inputSrc": ["vol_ratio", "one"]
     },
     {
       "name": "one",
@@ -43,63 +43,63 @@
       "name": "trend_fast",
       "type": "EMA",
       "init": { "period": 10 },
-      "updateSource": ["tick.close"]
+      "inputSrc": ["tick.close"]
     },
     {
       "name": "trend_slow",
       "type": "EMA",
       "init": { "period": 30 },
-      "updateSource": ["tick.close"]
+      "inputSrc": ["tick.close"]
     },
     {
       "name": "trend_diff",
       "type": "Sub",
-      "updateSource": ["trend_fast", "trend_slow"]
+      "inputSrc": ["trend_fast", "trend_slow"]
     },
     {
       "name": "trend_strength",
       "type": "Div",
-      "updateSource": ["trend_diff", "trend_slow"]
+      "inputSrc": ["trend_diff", "trend_slow"]
     },
     {
       "name": "vol_shift_abs",
       "type": "Abs",
-      "updateSource": ["vol_shift"]
+      "inputSrc": ["vol_shift"]
     },
     {
       "name": "trend_sign",
       "type": "Sign",
-      "updateSource": ["trend_strength"]
+      "inputSrc": ["trend_strength"]
     },
     {
       "name": "vol_shift_sign",
       "type": "Sign",
-      "updateSource": ["vol_shift"]
+      "inputSrc": ["vol_shift"]
     },
     {
       "name": "alignment",
       "type": "Mul",
-      "updateSource": ["trend_sign", "vol_shift_sign"]
+      "inputSrc": ["trend_sign", "vol_shift_sign"]
     },
     {
       "name": "trend_strength_abs",
       "type": "Abs",
-      "updateSource": ["trend_strength"]
+      "inputSrc": ["trend_strength"]
     },
     {
       "name": "combined_strength",
       "type": "Mul",
-      "updateSource": ["vol_shift_abs", "trend_strength_abs"]
+      "inputSrc": ["vol_shift_abs", "trend_strength_abs"]
     },
     {
       "name": "raw_signal",
       "type": "Mul",
-      "updateSource": ["alignment", "combined_strength"]
+      "inputSrc": ["alignment", "combined_strength"]
     },
     {
       "name": "signal_scaled",
       "type": "Mul",
-      "updateSource": ["raw_signal", "scale_factor"]
+      "inputSrc": ["raw_signal", "scale_factor"]
     },
     {
       "name": "scale_factor",
@@ -109,7 +109,7 @@
     {
       "name": "signal_clamped",
       "type": "Clamp",
-      "updateSource": ["signal_scaled", "neg_hundred", "hundred"]
+      "inputSrc": ["signal_scaled", "neg_hundred", "hundred"]
     },
     {
       "name": "neg_hundred",
@@ -129,7 +129,7 @@
     {
       "name": "my_signal",
       "type": "Add",
-      "updateSource": ["signal_clamped", "fifty"]
+      "inputSrc": ["signal_clamped", "fifty"]
     }
   ]
 }

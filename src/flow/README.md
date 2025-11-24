@@ -186,10 +186,10 @@ Events are emitted only when operators produce non-undefined results.
 - `get(name)` - Get constructor by name
 - `has(name)` - Check if type exists
 
-### OpSchema
+### NodeSchema
 
 ```typescript
-interface OpSchema {
+interface NodeSchema {
   name: string;           // Node name in graph
   type: string;           // Type name in registry
   init?: any;             // Constructor parameters
@@ -202,7 +202,7 @@ interface OpSchema {
 ```typescript
 interface GraphSchema {
   root: string;            // Root node name
-  nodes: OpSchema[];   // Operator configurations
+  nodes: NodeSchema[];   // Operator configurations
 }
 ```
 

@@ -1,11 +1,11 @@
 export { Graph } from "./Graph.js";
 export { OpRegistry } from "./Registry.js";
 export {
-  type OpSchema,
+  type NodeSchema,
   type GraphSchema,
   type GraphSchemaValidationResult,
   type GraphError,
-  OpSchemaZod,
+  NodeSchemaZod,
   GraphSchemaZod,
   validateGraphSchema,
   formatValidationError,

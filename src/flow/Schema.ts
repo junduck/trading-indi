@@ -6,7 +6,7 @@ import { validateAdjList } from "./validate.js";
 /**
  * Zod schema for operator node validation.
  */
-export const OpSchemaZod = z.object({
+export const NodeSchemaZod = z.object({
   name: z.string().min(1, "Node name must be non-empty"),
   type: z.string().min(1, "Node type must be non-empty"),
   init: z.unknown().optional(),
@@ -16,14 +16,14 @@ export const OpSchemaZod = z.object({
 /**
  * Operator node schema for JSON serialization.
  */
-export type OpSchema = z.infer<typeof OpSchemaZod>;
+export type NodeSchema = z.infer<typeof NodeSchemaZod>;
 
 /**
  * Zod schema for graph validation.
  */
 export const GraphSchemaZod = z.object({
   root: z.string().min(1, "Root node name must be non-empty"),
-  nodes: z.array(OpSchemaZod),
+  nodes: z.array(NodeSchemaZod),
 });
 
 /**

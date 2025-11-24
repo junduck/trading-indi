@@ -39,8 +39,8 @@ describe("Graph Validation", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "fast", type: "EMA", updateSource: ["tick"] },
-        { name: "slow", type: "SMA", updateSource: ["tick"] },
+        { name: "fast", type: "EMA", inputSrc: ["tick"] },
+        { name: "slow", type: "SMA", inputSrc: ["tick"] },
       ],
     };
 
@@ -54,7 +54,7 @@ describe("Graph Validation", () => {
 
     const descriptor: GraphSchema = {
       root: "tick",
-      nodes: [{ name: "ema", type: "Unknown", updateSource: ["tick"] }],
+      nodes: [{ name: "ema", type: "Unknown", inputSrc: ["tick"] }],
     };
 
     const result = validateGraphSchema(descriptor, registry);
@@ -72,7 +72,7 @@ describe("Graph Validation", () => {
 
     const descriptor: GraphSchema = {
       root: "tick",
-      nodes: [{ name: "ema", type: "EMA", updateSource: ["missing"] }],
+      nodes: [{ name: "ema", type: "EMA", inputSrc: ["missing"] }],
     };
 
     const result = validateGraphSchema(descriptor, registry);
@@ -90,7 +90,7 @@ describe("Graph Validation", () => {
 
     const descriptor: GraphSchema = {
       root: "tick",
-      nodes: [{ name: "ema", type: "EMA", updateSource: ["tick.price"] }],
+      nodes: [{ name: "ema", type: "EMA", inputSrc: ["tick.price"] }],
     };
 
     const result = validateGraphSchema(descriptor, registry);
@@ -102,7 +102,7 @@ describe("Graph Validation", () => {
 
     const descriptor: GraphSchema = {
       root: "price",
-      nodes: [{ name: "ema", type: "EMA", updateSource: ["tick"] }],
+      nodes: [{ name: "ema", type: "EMA", inputSrc: ["tick"] }],
     };
 
     const result = validateGraphSchema(descriptor, registry);
@@ -121,9 +121,9 @@ describe("Graph Validation", () => {
     const descriptor: GraphSchema = {
       root: "a",
       nodes: [
-        { name: "a", type: "Op", updateSource: ["c"] },
-        { name: "b", type: "Op", updateSource: ["a"] },
-        { name: "c", type: "Op", updateSource: ["b"] },
+        { name: "a", type: "Op", inputSrc: ["c"] },
+        { name: "b", type: "Op", inputSrc: ["a"] },
+        { name: "c", type: "Op", inputSrc: ["b"] },
       ],
     };
 
@@ -143,9 +143,9 @@ describe("Graph Validation", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "a", type: "Op", updateSource: ["tick"] },
-        { name: "b", type: "Op", updateSource: ["a"] },
-        { name: "c", type: "Op", updateSource: ["a", "b"] },
+        { name: "a", type: "Op", inputSrc: ["tick"] },
+        { name: "b", type: "Op", inputSrc: ["a"] },
+        { name: "c", type: "Op", inputSrc: ["a", "b"] },
       ],
     };
 
@@ -153,14 +153,14 @@ describe("Graph Validation", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("should validate when updateSource is omitted (for Const nodes)", () => {
+  it("should validate when inputSrc is omitted (for Const nodes)", () => {
     const registry = new OpRegistry().register(Op);
 
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
         { name: "const", type: "Op" },
-        { name: "b", type: "Op", updateSource: ["const"] },
+        { name: "b", type: "Op", inputSrc: ["const"] },
       ],
     };
 
@@ -168,14 +168,14 @@ describe("Graph Validation", () => {
     expect(result.valid).toBe(true);
   });
 
-  it("should validate when updateSource is empty string (for Const nodes)", () => {
+  it("should validate when inputSrc is empty string (for Const nodes)", () => {
     const registry = new OpRegistry().register(Op);
 
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "const", type: "Op", updateSource: "" },
-        { name: "b", type: "Op", updateSource: ["const"] },
+        { name: "const", type: "Op", inputSrc: "" },
+        { name: "b", type: "Op", inputSrc: ["const"] },
       ],
     } as any;
 
@@ -188,7 +188,7 @@ describe("Graph Complexity", () => {
   it("should calculate complexity for simple graph", () => {
     const descriptor: GraphSchema = {
       root: "tick",
-      nodes: [{ name: "ema", type: "EMA", updateSource: ["tick"] }],
+      nodes: [{ name: "ema", type: "EMA", inputSrc: ["tick"] }],
     };
 
     expect(graphComplexity(descriptor)).toBe(2); // 1 node + 1 edge
@@ -198,9 +198,9 @@ describe("Graph Complexity", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "a", type: "Op", updateSource: ["tick"] },
-        { name: "b", type: "Op", updateSource: ["tick"] },
-        { name: "c", type: "Op", updateSource: ["a", "b"] },
+        { name: "a", type: "Op", inputSrc: ["tick"] },
+        { name: "b", type: "Op", inputSrc: ["tick"] },
+        { name: "c", type: "Op", inputSrc: ["a", "b"] },
       ],
     };
 
@@ -211,32 +211,32 @@ describe("Graph Complexity", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "a", type: "Op", updateSource: [] },
-        { name: "b", type: "Op", updateSource: [] },
+        { name: "a", type: "Op", inputSrc: [] },
+        { name: "b", type: "Op", inputSrc: [] },
       ],
     };
 
     expect(graphComplexity(descriptor)).toBe(2); // 2 nodes + 0 edges
   });
 
-  it("should handle omitted updateSource (for Const nodes)", () => {
+  it("should handle omitted inputSrc (for Const nodes)", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
         { name: "const", type: "Op" },
-        { name: "b", type: "Op", updateSource: ["const"] },
+        { name: "b", type: "Op", inputSrc: ["const"] },
       ],
     };
 
     expect(graphComplexity(descriptor)).toBe(3); // 2 nodes + 1 edge
   });
 
-  it("should handle empty string updateSource (for Const nodes)", () => {
+  it("should handle empty string inputSrc (for Const nodes)", () => {
     const descriptor: GraphSchema = {
       root: "tick",
       nodes: [
-        { name: "const", type: "Op", updateSource: "" },
-        { name: "b", type: "Op", updateSource: ["const"] },
+        { name: "const", type: "Op", inputSrc: "" },
+        { name: "b", type: "Op", inputSrc: ["const"] },
       ],
     } as any;
 

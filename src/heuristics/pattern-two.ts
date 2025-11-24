@@ -48,8 +48,11 @@ export class BearishEngulfing {
   }
 }
 
-export function useBearishEngulfing() {
-  return new BearishEngulfing();
+export function useBearishEngulfing(): (
+  bar: BarWith<"open" | "close">
+) => boolean {
+  const instance = new BearishEngulfing();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -96,8 +99,11 @@ export class BullishHarami {
   }
 }
 
-export function useBullishHarami() {
-  return new BullishHarami();
+export function useBullishHarami(): (
+  bar: BarWith<"open" | "close">
+) => boolean {
+  const instance = new BullishHarami();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -144,8 +150,11 @@ export class BearishHarami {
   }
 }
 
-export function useBearishHarami() {
-  return new BearishHarami();
+export function useBearishHarami(): (
+  bar: BarWith<"open" | "close">
+) => boolean {
+  const instance = new BearishHarami();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -193,8 +202,11 @@ export class HaramiCross {
   }
 }
 
-export function useHaramiCross() {
-  return new HaramiCross();
+export function useHaramiCross(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new HaramiCross();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -244,8 +256,11 @@ export class PiercingPattern {
   }
 }
 
-export function usePiercingPattern() {
-  return new PiercingPattern();
+export function usePiercingPattern(): (
+  bar: BarWith<"open" | "close">
+) => boolean {
+  const instance = new PiercingPattern();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -295,14 +310,23 @@ export class DarkCloudCover {
   }
 }
 
-export function useDarkCloudCover() {
-  return new DarkCloudCover();
+export function useDarkCloudCover(): (
+  bar: BarWith<"open" | "close">
+) => boolean {
+  const instance = new DarkCloudCover();
+  return (bar) => instance.onData(bar);
 }
 
 /**
  * Tweezer Tops - two candles with matching highs, first bullish then bearish
  */
 export class TweezerTops {
+  static readonly doc: OperatorDoc = {
+    type: "TweezerTops",
+    input: "open, close, high, low",
+    output: "boolean",
+  };
+
   private prev?: BarWith<"open" | "close" | "high" | "low">;
 
   /**
@@ -339,10 +363,23 @@ export class TweezerTops {
   }
 }
 
+export function useTweezerTops(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new TweezerTops();
+  return (bar) => instance.onData(bar);
+}
+
 /**
  * Tweezer Bottoms - two candles with matching lows, first bearish then bullish
  */
 export class TweezerBottoms {
+  static readonly doc: OperatorDoc = {
+    type: "TweezerBottoms",
+    input: "open, close, high, low",
+    output: "boolean",
+  };
+
   private prev?: BarWith<"open" | "close" | "high" | "low">;
 
   /**
@@ -376,6 +413,13 @@ export class TweezerBottoms {
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
+}
+
+export function useTweezerBottoms(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new TweezerBottoms();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -423,8 +467,11 @@ export class BullishDojiStar {
   }
 }
 
-export function useBullishDojiStar() {
-  return new BullishDojiStar();
+export function useBullishDojiStar(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new BullishDojiStar();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -472,8 +519,11 @@ export class BearishDojiStar {
   }
 }
 
-export function useBearishDojiStar() {
-  return new BearishDojiStar();
+export function useBearishDojiStar(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new BearishDojiStar();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -516,8 +566,11 @@ export class InsideBar {
   }
 }
 
-export function useInsideBar() {
-  return new InsideBar();
+export function useInsideBar(): (
+  bar: BarWith<"high" | "low">
+) => boolean {
+  const instance = new InsideBar();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -560,8 +613,11 @@ export class OutsideBar {
   }
 }
 
-export function useOutsideBar() {
-  return new OutsideBar();
+export function useOutsideBar(): (
+  bar: BarWith<"high" | "low">
+) => boolean {
+  const instance = new OutsideBar();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -611,8 +667,11 @@ export class RailroadTracks {
   }
 }
 
-export function useRailroadTracks() {
-  return new RailroadTracks();
+export function useRailroadTracks(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new RailroadTracks();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -668,8 +727,11 @@ export class RisingWindow {
   }
 }
 
-export function useRisingWindow(opts?: PeriodWith<"period">) {
-  return new RisingWindow(opts);
+export function useRisingWindow(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new RisingWindow(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -726,6 +788,9 @@ export class FallingWindow {
   }
 }
 
-export function useFallingWindow(opts?: PeriodWith<"period">) {
-  return new FallingWindow(opts);
+export function useFallingWindow(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new FallingWindow(opts);
+  return (bar) => instance.onData(bar);
 }

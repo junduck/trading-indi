@@ -87,8 +87,11 @@ export class EveningStar {
   }
 }
 
-export function useEveningStar(opts?: PeriodWith<"period">) {
-  return new EveningStar(opts);
+export function useEveningStar(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new EveningStar(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -169,8 +172,11 @@ export class MorningDojiStar {
   }
 }
 
-export function useMorningDojiStar(opts?: PeriodWith<"period">) {
-  return new MorningDojiStar(opts);
+export function useMorningDojiStar(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new MorningDojiStar(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -251,8 +257,11 @@ export class EveningDojiStar {
   }
 }
 
-export function useEveningDojiStar(opts?: PeriodWith<"period">) {
-  return new EveningDojiStar(opts);
+export function useEveningDojiStar(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new EveningDojiStar(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -321,8 +330,11 @@ export class AbandonedBabyBullish {
   }
 }
 
-export function useAbandonedBabyBullish() {
-  return new AbandonedBabyBullish();
+export function useAbandonedBabyBullish(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new AbandonedBabyBullish();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -391,8 +403,11 @@ export class AbandonedBabyBearish {
   }
 }
 
-export function useAbandonedBabyBearish() {
-  return new AbandonedBabyBearish();
+export function useAbandonedBabyBearish(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new AbandonedBabyBearish();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -489,6 +504,13 @@ export class ThreeWhiteSoldiers {
   }
 }
 
+export function useThreeWhiteSoldiers(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new ThreeWhiteSoldiers(opts);
+  return (bar) => instance.onData(bar);
+}
+
 /**
  * Three Black Crows - bearish continuation pattern
  * Detects three consecutive long bearish candles with specific opening and closing relationships.
@@ -583,6 +605,13 @@ export class ThreeBlackCrows {
   }
 }
 
+export function useThreeBlackCrows(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new ThreeBlackCrows(opts);
+  return (bar) => instance.onData(bar);
+}
+
 /**
  * Three Inside Up - bullish reversal pattern
  * Detects a three-candle pattern where the first two bars form a bullish harami,
@@ -647,8 +676,11 @@ export class ThreeInsideUp {
   }
 }
 
-export function useThreeInsideUp() {
-  return new ThreeInsideUp();
+export function useThreeInsideUp(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new ThreeInsideUp();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -715,8 +747,11 @@ export class ThreeInsideDown {
   }
 }
 
-export function useThreeInsideDown() {
-  return new ThreeInsideDown();
+export function useThreeInsideDown(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new ThreeInsideDown();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -787,8 +822,11 @@ export class ThreeOutsideUp {
   }
 }
 
-export function useThreeOutsideUp() {
-  return new ThreeOutsideUp();
+export function useThreeOutsideUp(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new ThreeOutsideUp();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -859,8 +897,11 @@ export class ThreeOutsideDown {
   }
 }
 
-export function useThreeOutsideDown() {
-  return new ThreeOutsideDown();
+export function useThreeOutsideDown(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new ThreeOutsideDown();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -941,8 +982,11 @@ export class FakeyPatternBullish {
   }
 }
 
-export function useFakeyPatternBullish(opts?: PeriodWith<"period">) {
-  return new FakeyPatternBullish(opts);
+export function useFakeyPatternBullish(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new FakeyPatternBullish(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -1023,8 +1067,11 @@ export class FakeyPatternBearish {
   }
 }
 
-export function useFakeyPatternBearish(opts?: PeriodWith<"period">) {
-  return new FakeyPatternBearish(opts);
+export function useFakeyPatternBearish(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new FakeyPatternBearish(opts);
+  return (bar) => instance.onData(bar);
 }
 
 // Five Bar Patterns
@@ -1117,8 +1164,11 @@ export class RisingThreeMethods {
   }
 }
 
-export function useRisingThreeMethods(opts?: PeriodWith<"period">) {
-  return new RisingThreeMethods(opts);
+export function useRisingThreeMethods(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new RisingThreeMethods(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -1209,8 +1259,11 @@ export class FallingThreeMethods {
   }
 }
 
-export function useFallingThreeMethods(opts?: PeriodWith<"period">) {
-  return new FallingThreeMethods(opts);
+export function useFallingThreeMethods(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new FallingThreeMethods(opts);
+  return (bar) => instance.onData(bar);
 }
 
 // Four Bar Patterns
@@ -1321,6 +1374,13 @@ export class ThreeBuddhaTop {
   onData(bar: BarWith<"open" | "close" | "high" | "low">): boolean {
     return this.update(bar.open, bar.close, bar.high, bar.low);
   }
+}
+
+export function useThreeBuddhaTop(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new ThreeBuddhaTop();
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -1434,6 +1494,9 @@ export class InvertedThreeBuddha {
   }
 }
 
-export function useInvertedThreeBuddha() {
-  return new InvertedThreeBuddha();
+export function useInvertedThreeBuddha(): (
+  bar: BarWith<"open" | "close" | "high" | "low">
+) => boolean {
+  const instance = new InvertedThreeBuddha();
+  return (bar) => instance.onData(bar);
 }

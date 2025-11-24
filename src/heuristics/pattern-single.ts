@@ -54,8 +54,11 @@ export class Doji {
   }
 }
 
-export function useDoji() {
-  return new Doji();
+export function useDoji(
+  opts?: { dojiThres?: number }
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new Doji(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -104,8 +107,11 @@ export class LongLeggedDoji {
   }
 }
 
-export function useLongLeggedDoji(opts?: PeriodWith<"period">) {
-  return new LongLeggedDoji(opts);
+export function useLongLeggedDoji(
+  opts?: PeriodWith<"period">
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new LongLeggedDoji(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -160,8 +166,11 @@ export class DragonflyDoji {
   }
 }
 
-export function useDragonflyDoji() {
-  return new DragonflyDoji();
+export function useDragonflyDoji(
+  opts?: { lowerShadowThres?: number; upperShadowThres?: number }
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new DragonflyDoji(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -216,11 +225,11 @@ export class GravestoneDoji {
   }
 }
 
-export function useGravestoneDoji(opts?: {
-  upperShadowThres?: number;
-  lowerShadowThres?: number;
-}) {
-  return new GravestoneDoji(opts);
+export function useGravestoneDoji(
+  opts?: { upperShadowThres?: number; lowerShadowThres?: number }
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new GravestoneDoji(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -289,8 +298,9 @@ export class SpinningTop {
 
 export function useSpinningTop(
   opts?: PeriodWith<"period"> & { rangeMultiplier?: number; bodyThres?: number }
-) {
-  return new SpinningTop(opts);
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new SpinningTop(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -355,8 +365,9 @@ export class MarubozuWhite {
 
 export function useMarubozuWhite(
   opts?: PeriodWith<"period"> & { shadowThres?: number }
-) {
-  return new MarubozuWhite(opts);
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new MarubozuWhite(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -421,8 +432,9 @@ export class MarubozuBlack {
 
 export function useMarubozuBlack(
   opts?: PeriodWith<"period"> & { shadowThres?: number }
-) {
-  return new MarubozuBlack(opts);
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new MarubozuBlack(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -487,12 +499,15 @@ export class Hammer {
   }
 }
 
-export function useHammer(opts?: {
-  bodyThres?: number;
-  lowerShadowThres?: number;
-  upperShadowThres?: number;
-}) {
-  return new Hammer(opts);
+export function useHammer(
+  opts?: {
+    bodyThres?: number;
+    lowerShadowThres?: number;
+    upperShadowThres?: number;
+  }
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new Hammer(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -557,12 +572,15 @@ export class InvertedHammer {
   }
 }
 
-export function useInvertedHammer(opts?: {
-  bodyThres?: number;
-  upperShadowThres?: number;
-  lowerShadowThres?: number;
-}) {
-  return new InvertedHammer(opts);
+export function useInvertedHammer(
+  opts?: {
+    bodyThres?: number;
+    upperShadowThres?: number;
+    lowerShadowThres?: number;
+  }
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new InvertedHammer(opts);
+  return (bar) => instance.onData(bar);
 }
 
 /**
@@ -644,6 +662,7 @@ export function useHighWave(
     bodyThres?: number;
     shadowThres?: number;
   }
-) {
-  return new HighWave(opts);
+): (bar: BarWith<"open" | "close" | "high" | "low">) => boolean {
+  const instance = new HighWave(opts);
+  return (bar) => instance.onData(bar);
 }

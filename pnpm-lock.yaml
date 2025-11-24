@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@junduck/trading-core':
+        specifier: ^2.2.0
+        version: 2.2.0
       zod:
         specifier: ^4.1.12
         version: 4.1.12
@@ -260,6 +263,9 @@ packages:
 
   '@jridgewell/trace-mapping@0.3.31':
     resolution: {integrity: sha512-zzNR+SdQSDJzc8joaeP8QQoCQr8NuYx2dIIytl1QeBEZHJ9uW6hebsrYgbz8hJwUQao3TWCMtmfV8Nu1twOLAw==}
+
+  '@junduck/trading-core@2.2.0':
+    resolution: {integrity: sha512-L/pFo70q+J/2BQ1oqGnGmlYp+bAPD97xbdaIlHTZ5mLzwnkD1Vo7W46pKYr1Pg0a2d/anlYSGH7vwzkarvjmiQ==}
 
   '@minimistjs/subarg@1.0.0':
     resolution: {integrity: sha512-Q/ONBiM2zNeYUy0mVSO44mWWKYM3UHuEK43PKIOzJCbvUnPoMH1K+gk3cf1kgnCVJFlWmddahQQCmrmBGlk9jQ==}
@@ -3213,6 +3219,8 @@ snapshots:
     dependencies:
       '@jridgewell/resolve-uri': 3.1.2
       '@jridgewell/sourcemap-codec': 1.5.5
+
+  '@junduck/trading-core@2.2.0': {}
 
   '@minimistjs/subarg@1.0.0':
     dependencies:

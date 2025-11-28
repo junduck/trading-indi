@@ -1,6 +1,6 @@
 {
   "name": "@junduck/trading-indi",
-  "version": "0.997.0",
+  "version": "0.998.0",
   "description": "A TypeScript library providing 80+ technical indicators for trading, designed for incremental, stateful calculation perfect for intraday and realtime trading applications",
   "keywords": [
     "trading",

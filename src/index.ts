@@ -433,6 +433,7 @@ export type {
   FlowGraphValidationResult,
   FlowGraphError,
   FlowGraphDiff,
+  FlowGraphComplexity,
 } from "./flow/schema.js";
 export { FlowNodeSchema, FlowGraphSchema } from "./flow/schema.js";
 export {

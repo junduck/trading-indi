@@ -8,6 +8,7 @@ export {
   type FlowGraphValidationResult,
   type FlowGraphError,
   type FlowGraphDiff,
+  type FlowGraphComplexity,
 } from "./schema.js";
 export { validateFlowGraph, formatFlowValidationError } from "./validate.js";
 export {

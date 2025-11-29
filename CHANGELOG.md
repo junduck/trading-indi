@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.998.2] - 2025-11-29
+
+### Changed
+
+- Updated Flow module documentation to remove AsyncGraph references due to race condition concerns
+- Clarified custom operator usage with `predSatisfied` method and `OpAdapter` for trading-core compatibility
+
+### Added
+
+- Sub-module deep import support via package.json exports (`/indicators`, `/primitive`, `/aggregation`, `/heuristics`, `/flow`)
+
 ## [0.996.0] - 2025-11-24
 
 ### Changed

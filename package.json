@@ -1,6 +1,6 @@
 {
   "name": "@junduck/trading-indi",
-  "version": "0.998.1",
+  "version": "0.998.2",
   "description": "A TypeScript library providing 80+ technical indicators for trading, designed for incremental, stateful calculation perfect for intraday and realtime trading applications",
   "keywords": [
     "trading",
@@ -17,6 +17,26 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./indicators": {
+      "types": "./dist/indicators/index.d.ts",
+      "import": "./dist/indicators/index.js"
+    },
+    "./primitive": {
+      "types": "./dist/primitive/index.d.ts",
+      "import": "./dist/primitive/index.js"
+    },
+    "./aggregation": {
+      "types": "./dist/aggregation/index.d.ts",
+      "import": "./dist/aggregation/index.js"
+    },
+    "./heuristics": {
+      "types": "./dist/heuristics/index.d.ts",
+      "import": "./dist/heuristics/index.js"
+    },
+    "./flow": {
+      "types": "./dist/flow/index.d.ts",
+      "import": "./dist/flow/index.js"
     }
   },
   "files": [

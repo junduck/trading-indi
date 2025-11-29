@@ -15,3 +15,4 @@ export {
   calculateFlowGraphComplexity,
   compareFlowGraphs,
 } from "./schema-utils.js";
+export { OpAdapter } from "./utils.js";

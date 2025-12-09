@@ -71,11 +71,24 @@ class NestedValueTracker {
           val !== null &&
           !Array.isArray(val)
         ) {
-          // Recursively handle nested objects
-          const childTracker =
-            (this.trackers.get(key) as NestedValueTracker) ||
-            new NestedValueTracker(this.period);
-          this.trackers.set(key, childTracker);
+          // Recursively handle nested objects.
+          // If there is an existing scalar tracker for this key, convert it
+          // into a NestedValueTracker and preserve the scalar under "__value__".
+          const existing = this.trackers.get(key);
+          let childTracker: NestedValueTracker;
+
+          if (existing instanceof NestedValueTracker) {
+            childTracker = existing;
+          } else if (existing instanceof GraphNodeTracker) {
+            childTracker = new NestedValueTracker(this.period);
+            // preserve previous scalar tracker under a reserved key
+            childTracker.trackers.set("__value__", existing);
+            this.trackers.set(key, childTracker);
+          } else {
+            childTracker = new NestedValueTracker(this.period);
+            this.trackers.set(key, childTracker);
+          }
+
           result[key] = childTracker.update(val);
         }
         // Non-numeric primitives are ignored (undefined)
